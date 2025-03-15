@@ -7,7 +7,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[#121212] text-white">
       <Header />
-      <main className="container mx-auto px-4 pb-16">
+      <main className="container mx-auto px-2 pb-16 max-w-full">
         <PeriodicTable />
       </main>
       <footer className="py-6 text-center text-gray-500 text-sm">
