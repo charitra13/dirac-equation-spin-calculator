@@ -11,21 +11,26 @@ const PeriodicTable = () => {
   const [selectedElement, setSelectedElement] = useState<ElementType | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [containerWidth, setContainerWidth] = useState<number>(0);
+  const [containerHeight, setContainerHeight] = useState<number>(0);
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    const updateContainerWidth = () => {
+    const updateContainerDimensions = () => {
       const container = document.querySelector('.periodic-table-container');
       if (container) {
         setContainerWidth(container.clientWidth);
+        // Get the available height for the table (viewport height minus header, footer, and some margins)
+        const viewportHeight = window.innerHeight;
+        const estimatedHeaderFooterHeight = 150; // Adjust based on your layout
+        setContainerHeight(viewportHeight - estimatedHeaderFooterHeight);
       }
     };
 
-    updateContainerWidth();
-    window.addEventListener('resize', updateContainerWidth);
+    updateContainerDimensions();
+    window.addEventListener('resize', updateContainerDimensions);
     
     return () => {
-      window.removeEventListener('resize', updateContainerWidth);
+      window.removeEventListener('resize', updateContainerDimensions);
     };
   }, []);
 
@@ -38,20 +43,26 @@ const PeriodicTable = () => {
     setIsDetailsOpen(false);
   };
 
-  // Calculate size of elements based on container width
+  // Calculate size of elements based on container width and height
   const getElementSize = () => {
-    // For the 18 elements in the widest period plus some margin
-    const idealElementWidth = Math.floor((containerWidth - 40) / 18);
+    // For the 18 elements in the widest period
+    const widthBasedSize = Math.floor((containerWidth - 40) / 18);
+    
+    // For the 7 periods plus 2 rows for lanthanides/actinides and some spacing
+    const heightBasedSize = Math.floor(containerHeight / 10);
+    
+    // Take the smaller of the two to ensure it fits both dimensions
+    const baseSize = Math.min(widthBasedSize, heightBasedSize);
     
     // Ensure a minimum size
-    return Math.max(idealElementWidth, isMobile ? 30 : 50);
+    return Math.max(baseSize, isMobile ? 20 : 36);
   };
 
   const elementSize = getElementSize();
   const elementStyle = {
     width: `${elementSize}px`,
     height: `${elementSize}px`,
-    fontSize: `${Math.max(elementSize * 0.18, 8)}px`, // Adjust font size based on element size
+    fontSize: `${Math.max(elementSize * 0.18, 6)}px`, // Adjust font size based on element size
   };
 
   // Generate a period row with responsive sizes
@@ -63,7 +74,7 @@ const PeriodicTable = () => {
       
       if (element) {
         row.push(
-          <div key={element.symbol} className="flex justify-center items-center" style={{ width: `${elementSize}px`, height: `${elementSize}px` }}>
+          <div key={element.symbol} style={{ width: `${elementSize}px`, height: `${elementSize}px` }}>
             <Element 
               symbol={element.symbol}
               number={element.number}
@@ -94,8 +105,8 @@ const PeriodicTable = () => {
     const actinides = elements.filter(el => el.category === 'actinoid');
     
     const renderSpecialRow = (elements: ElementType[], rowLabel: string) => (
-      <div className="flex items-center mt-4">
-        <div className="flex items-center justify-center text-sm" style={{ width: `${elementSize}px`, height: `${elementSize}px` }}>
+      <div className="flex items-center mt-1">
+        <div className="flex items-center justify-center text-xs" style={{ width: `${elementSize}px`, height: `${elementSize}px` }}>
           {!isMobile && rowLabel}
         </div>
         <div className="flex">
@@ -117,48 +128,46 @@ const PeriodicTable = () => {
     );
     
     return (
-      <div className="mt-4">
-        {renderSpecialRow(lanthanides, "Lanthanides")}
-        {renderSpecialRow(actinides, "Actinides")}
+      <div className="mt-2">
+        {renderSpecialRow(lanthanides, "La")}
+        {renderSpecialRow(actinides, "Ac")}
       </div>
     );
   };
 
   return (
-    <div className="periodic-table-container p-2">
-      <ScrollArea className="w-full">
-        <div className="mx-auto">
-          {/* Main periodic table */}
-          <div className="periodic-table">
-            {/* Period 1 */}
-            {renderPeriod(1)}
-            
-            {/* Period 2 */}
-            {renderPeriod(2)}
-            
-            {/* Period 3 */}
-            {renderPeriod(3)}
-            
-            {/* Period 4 */}
-            {renderPeriod(4)}
-            
-            {/* Period 5 */}
-            {renderPeriod(5)}
-            
-            {/* Period 6 (excluding lanthanides) */}
-            {renderPeriod(6)}
-            
-            {/* Period 7 (excluding actinides) */}
-            {renderPeriod(7)}
-            
-            {/* Lanthanides and Actinides */}
-            {renderSpecialPeriods()}
-          </div>
+    <div className="periodic-table-container p-2 h-full">
+      <div className="mx-auto">
+        {/* Main periodic table */}
+        <div className="periodic-table">
+          {/* Period 1 */}
+          {renderPeriod(1)}
           
-          {/* Legend */}
-          <Legend />
+          {/* Period 2 */}
+          {renderPeriod(2)}
+          
+          {/* Period 3 */}
+          {renderPeriod(3)}
+          
+          {/* Period 4 */}
+          {renderPeriod(4)}
+          
+          {/* Period 5 */}
+          {renderPeriod(5)}
+          
+          {/* Period 6 (excluding lanthanides) */}
+          {renderPeriod(6)}
+          
+          {/* Period 7 (excluding actinides) */}
+          {renderPeriod(7)}
+          
+          {/* Lanthanides and Actinides */}
+          {renderSpecialPeriods()}
         </div>
-      </ScrollArea>
+        
+        {/* Legend */}
+        <Legend />
+      </div>
       
       {/* Element Details Dialog */}
       <ElementDetails 
