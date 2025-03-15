@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,26 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Neon colors for periodic table
+				neon: {
+					'red': '#FF0055',
+					'blue': '#00DDFF',
+					'green': '#00FF66',
+					'purple': '#9D00FF',
+					'yellow': '#FFDD00',
+					'orange': '#FF7700',
+					'pink': '#FF00AA'
+				},
+				element: {
+					'alkali': '#FF5555',
+					'alkaline': '#FFA500',
+					'transition': '#FFFF55',
+					'poor': '#55FF55',
+					'nonmetal': '#55FFFF',
+					'noble': '#FF55FF',
+					'lanthanoid': '#AAAAFF',
+					'actinoid': '#FF9999'
 				}
 			},
 			borderRadius: {
@@ -84,11 +105,36 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'glow': {
+					'0%, 100%': { 
+						boxShadow: '0 0 5px rgba(0, 255, 255, 0.8), 0 0 10px rgba(0, 255, 255, 0.6)', 
+					},
+					'50%': { 
+						boxShadow: '0 0 10px rgba(0, 255, 255, 0.9), 0 0 20px rgba(0, 255, 255, 0.7)', 
+					}
+				},
+				'pulse-glow': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.7' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'glow': 'glow 2s infinite',
+				'pulse-glow': 'pulse-glow 3s infinite'
+			},
+			boxShadow: {
+				'neon-glow': '0 0 5px rgba(0, 255, 255, 0.8), 0 0 10px rgba(0, 255, 255, 0.6)',
+				'neon-glow-hover': '0 0 10px rgba(0, 255, 255, 0.9), 0 0 20px rgba(0, 255, 255, 0.7)',
+				'neon-red': '0 0 5px rgba(255, 0, 85, 0.8), 0 0 10px rgba(255, 0, 85, 0.6)',
+				'neon-blue': '0 0 5px rgba(0, 221, 255, 0.8), 0 0 10px rgba(0, 221, 255, 0.6)',
+				'neon-green': '0 0 5px rgba(0, 255, 102, 0.8), 0 0 10px rgba(0, 255, 102, 0.6)',
+				'neon-purple': '0 0 5px rgba(157, 0, 255, 0.8), 0 0 10px rgba(157, 0, 255, 0.6)',
+				'neon-yellow': '0 0 5px rgba(255, 221, 0, 0.8), 0 0 10px rgba(255, 221, 0, 0.6)',
+				'neon-orange': '0 0 5px rgba(255, 119, 0, 0.8), 0 0 10px rgba(255, 119, 0, 0.6)',
+				'neon-pink': '0 0 5px rgba(255, 0, 170, 0.8), 0 0 10px rgba(255, 0, 170, 0.6)',
 			}
 		}
 	},
