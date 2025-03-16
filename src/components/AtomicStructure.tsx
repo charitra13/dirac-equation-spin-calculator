@@ -84,11 +84,12 @@ const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol 
       ctx.fillStyle = '#ff4545';
       ctx.fill();
       
-      // Add nucleus detail
-      ctx.beginPath();
-      ctx.arc(centerX - nucleusRadius * 0.3, centerY - nucleusRadius * 0.3, nucleusRadius * 0.2, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-      ctx.fill();
+      // Removing the nucleus detail (the white dot)
+      // This code is removed:
+      // ctx.beginPath();
+      // ctx.arc(centerX - nucleusRadius * 0.3, centerY - nucleusRadius * 0.3, nucleusRadius * 0.2, 0, Math.PI * 2);
+      // ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      // ctx.fill();
       
       // Draw element symbol in the nucleus
       ctx.font = `bold ${nucleusRadius}px Arial`;

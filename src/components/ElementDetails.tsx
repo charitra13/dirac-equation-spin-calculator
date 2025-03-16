@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { X } from 'lucide-react';
 import AtomicStructure from './AtomicStructure';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface ElementDetailsProps {
   isOpen: boolean;
@@ -55,7 +56,8 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-[#121212] border border-gray-800 max-w-full w-[95vw] h-[90vh] shadow-lg rounded-md overflow-hidden p-0">
+      <DialogContent className="bg-[#121212] border border-gray-800 max-w-full w-[95vw] h-[90vh] shadow-lg rounded-md overflow-hidden p-0" aria-describedby="element-description">
+        <DialogTitle className="sr-only">{element.name} - Element Details</DialogTitle>
         <div className="flex flex-col h-full">
           <div className={`bg-gradient-to-br ${getCategoryClass(element.category)} p-4 sm:p-6 relative`}>
             <button 
@@ -88,7 +90,7 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-medium text-gray-300 mb-2">Description</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{element.description}</p>
+                  <p id="element-description" className="text-sm text-gray-400 leading-relaxed">{element.description}</p>
                 </div>
                 
                 <div>
