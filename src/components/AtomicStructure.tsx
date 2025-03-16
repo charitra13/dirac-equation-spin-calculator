@@ -149,6 +149,11 @@ const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol 
     
     const animate = () => {
       angle += 0.005;
+      
+      // Define centerX and centerY inside animate function since they're needed here
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      
       ctx.save();
       ctx.translate(centerX, centerY);
       ctx.rotate(angle);
