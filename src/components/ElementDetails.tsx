@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { X } from 'lucide-react';
+import AtomicStructure from './AtomicStructure';
 
 interface ElementDetailsProps {
   isOpen: boolean;
@@ -54,49 +55,59 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-[#1a1a1a] border border-gray-800 max-w-md w-full shadow-lg rounded-md overflow-hidden">
-        <DialogHeader className={`bg-gradient-to-br ${getCategoryClass(element.category)} p-6`}>
-          <div className="absolute top-3 right-3">
+      <DialogContent className="bg-[#121212] border border-gray-800 max-w-full w-[95vw] h-[90vh] shadow-lg rounded-md overflow-hidden p-0">
+        <div className="flex flex-col h-full">
+          <div className={`bg-gradient-to-br ${getCategoryClass(element.category)} p-4 sm:p-6 relative`}>
             <button 
               onClick={onClose}
-              className="p-1 rounded-full hover:bg-white/10 transition-colors"
+              className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/10 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className={`element-card ${element.category} w-24 h-24 flex-shrink-0`}>
-              <div className="element-number">{element.number}</div>
-              <div className="element-symbol text-3xl">{element.symbol}</div>
-              <div className="element-mass text-xs">{element.mass}</div>
+            <div className="flex items-center space-x-4">
+              <div className={`element-card ${element.category} w-16 h-16 sm:w-24 sm:h-24 flex-shrink-0`}>
+                <div className="element-number">{element.number}</div>
+                <div className="element-symbol text-3xl">{element.symbol}</div>
+                <div className="element-mass text-xs">{element.mass}</div>
+              </div>
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold mb-1">{element.name}</h2>
+                <div className="text-sm opacity-70">{getCategoryLabel(element.category)}</div>
+              </div>
             </div>
-            <div>
-              <DialogTitle className="text-2xl font-bold mb-1">{element.name}</DialogTitle>
-              <div className="text-sm opacity-70">{getCategoryLabel(element.category)}</div>
-            </div>
-          </div>
-        </DialogHeader>
-        
-        <div className="p-6 space-y-4">
-          <div>
-            <h3 className="text-sm font-medium text-gray-400 mb-1">Description</h3>
-            <p className="text-sm">{element.description}</p>
           </div>
           
-          <div>
-            <h3 className="text-sm font-medium text-gray-400 mb-1">Electron Configuration</h3>
-            <p className="text-sm font-mono">{element.electronConfiguration}</p>
-          </div>
-          
-          {element.discoveredBy && (
-            <div>
-              <h3 className="text-sm font-medium text-gray-400 mb-1">Discovery</h3>
-              <p className="text-sm">
-                Discovered by {element.discoveredBy}
-                {element.yearDiscovered && ` in ${element.yearDiscovered}`}
-              </p>
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+            {/* Atomic Structure Visualization */}
+            <div className="w-full md:w-2/3 h-[40vh] md:h-full border-b md:border-b-0 md:border-r border-gray-800">
+              <AtomicStructure atomicNumber={element.number} symbol={element.symbol} />
             </div>
-          )}
+            
+            {/* Element Information */}
+            <div className="w-full md:w-1/3 p-4 sm:p-6 overflow-y-auto">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-300 mb-2">Description</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">{element.description}</p>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium text-gray-300 mb-2">Electron Configuration</h3>
+                  <p className="text-sm font-mono text-gray-400">{element.electronConfiguration}</p>
+                </div>
+                
+                {element.discoveredBy && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-300 mb-2">Discovery</h3>
+                    <p className="text-sm text-gray-400">
+                      Discovered by {element.discoveredBy}
+                      {element.yearDiscovered && ` in ${element.yearDiscovered}`}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
