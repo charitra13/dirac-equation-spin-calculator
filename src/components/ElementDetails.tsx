@@ -56,13 +56,19 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-[#121212] border border-gray-800 max-w-full w-[95vw] h-[90vh] shadow-lg rounded-md overflow-hidden p-0" aria-describedby="element-description">
+      <DialogContent 
+        className="bg-[#121212] border border-gray-800 max-w-full w-[95vw] h-[90vh] shadow-lg rounded-md overflow-hidden p-0" 
+        aria-describedby="element-description"
+        // Remove the default close button from DialogContent
+        closeButton={false}
+      >
         <DialogTitle className="sr-only">{element.name} - Element Details</DialogTitle>
         <div className="flex flex-col h-full">
           <div className={`bg-gradient-to-br ${getCategoryClass(element.category)} p-4 sm:p-6 relative`}>
             <button 
               onClick={onClose}
               className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/10 transition-colors"
+              aria-label="Close dialog"
             >
               <X className="h-5 w-5" />
             </button>
