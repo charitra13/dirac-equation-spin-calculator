@@ -71,7 +71,7 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
-        className="bg-[#121212] border border-gray-800 max-w-full w-[95vw] h-[90vh] shadow-lg rounded-md p-0 flex flex-col overflow-hidden" 
+        className="bg-[#121212] border border-gray-800 max-w-full w-[95vw] h-[90vh] md:h-[90vh] shadow-lg rounded-md p-0 flex flex-col overflow-hidden" 
         aria-describedby="element-description"
         closeButton={false}
       >
@@ -99,24 +99,26 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
           </div>
         </div>
         
-        {/* Content - Scrollable area that takes up remaining space */}
-        <ScrollArea className="flex-grow overflow-auto">
-          <div className="md:flex min-h-0">
+        {/* Content - Scrollable area */}
+        <div className="flex-grow overflow-auto">
+          <div className="flex flex-col md:flex-row">
             {/* Atomic Structure Visualization */}
-            <div className="w-full md:w-1/3 h-[300px] md:h-auto border-b md:border-b-0 md:border-r border-gray-800">
+            <div className="w-full md:w-1/3 h-[300px] md:h-[400px] border-b md:border-b-0 md:border-r border-gray-800">
               <div className="p-3 text-sm bg-gray-800/50">
                 <h3 className="font-medium mb-1">Atomic Structure</h3>
-                <p className="text-xs text-gray-400">Click on an electron to select it. Click on the nucleus to toggle rotation.</p>
+                <p className="text-xs text-gray-400">Click on an electron to select it. Click on the nucleus to pause/resume rotation.</p>
               </div>
-              <AtomicStructure 
-                atomicNumber={element.number} 
-                symbol={element.symbol}
-                onElectronSelect={handleElectronSelect}
-              />
+              <div className="h-[calc(100%-40px)]">
+                <AtomicStructure 
+                  atomicNumber={element.number} 
+                  symbol={element.symbol}
+                  onElectronSelect={handleElectronSelect}
+                />
+              </div>
             </div>
             
             {/* Electron Spin Visualization */}
-            <div className="w-full md:w-1/3 h-[300px] md:h-auto border-b md:border-b-0 md:border-r border-gray-800">
+            <div className="w-full md:w-1/3 h-[300px] md:h-[400px] border-b md:border-b-0 md:border-r border-gray-800">
               <div className="p-3 bg-gray-800/50 flex justify-between items-center">
                 <h3 className="font-medium">Electron Spin</h3>
                 <div className="flex items-center space-x-2 w-1/2">
@@ -132,11 +134,13 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
                   <span className="text-xs">{magneticField.toFixed(1)}</span>
                 </div>
               </div>
-              <ElectronSpinVisualization 
-                electronData={selectedElectron}
-                atomicNumber={element.number}
-                magneticField={magneticField}
-              />
+              <div className="h-[calc(100%-40px)]">
+                <ElectronSpinVisualization 
+                  electronData={selectedElectron}
+                  atomicNumber={element.number}
+                  magneticField={magneticField}
+                />
+              </div>
             </div>
             
             {/* Element Information */}
@@ -179,7 +183,7 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
               </div>
             </div>
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );

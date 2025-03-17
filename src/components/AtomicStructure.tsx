@@ -92,6 +92,7 @@ const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol,
     if (distanceToCenter <= nucleusRadius) {
       // Nucleus clicked, toggle rotation
       setIsRotating(prevState => !prevState);
+      console.log("Rotation toggled:", !isRotating); // Debug log
       return;
     }
     
@@ -165,7 +166,7 @@ const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol,
       // Draw nucleus
       ctx.beginPath();
       ctx.arc(centerX, centerY, nucleusRadius, 0, Math.PI * 2);
-      ctx.fillStyle = '#ff4545';
+      ctx.fillStyle = isRotating ? '#ff4545' : '#ff9045'; // Change color when paused
       ctx.fill();
       
       // Draw element symbol in the nucleus
