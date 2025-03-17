@@ -1,13 +1,31 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface AtomicStructureProps {
   atomicNumber: number;
   symbol: string;
+  onElectronSelect?: (electronData: ElectronData) => void;
 }
 
-const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol }) => {
+export interface ElectronData {
+  shellNumber: number;
+  electronIndex: number;
+  quantumNumbers: {
+    n: number;
+    l: number;
+    m: number;
+    s: number;
+  };
+  position: {
+    x: number;
+    y: number;
+  };
+}
+
+const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol, onElectronSelect }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [selectedElectron, setSelectedElectron] = useState<ElectronData | null>(null);
+  const electronPositionsRef = useRef<ElectronData[]>([]);
 
   // Calculate electron configuration
   const getElectronShells = (atomicNumber: number) => {
@@ -29,6 +47,55 @@ const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol 
     }
     
     return shells;
+  };
+
+  // Helper to calculate quantum numbers for an electron
+  const calculateQuantumNumbers = (shellNumber: number, electronIndex: number) => {
+    // This is a simplified model - in reality, quantum numbers are more complex
+    const n = shellNumber + 1; // Principal quantum number
+    
+    // For l (orbital angular momentum), we use a simplified assignment
+    // In reality, l can be 0 to n-1
+    const l = Math.min(shellNumber, 3); // s, p, d, f orbitals (0, 1, 2, 3)
+    
+    // For m (magnetic quantum number), ranges from -l to +l
+    // Here we're just distributing electrons evenly
+    const totalPossibleM = 2 * l + 1;
+    const m = electronIndex % totalPossibleM - l;
+    
+    // Spin quantum number (s) is either +1/2 or -1/2
+    const s = electronIndex % 2 === 0 ? 0.5 : -0.5;
+    
+    return { n, l, m, s };
+  };
+
+  // Handle canvas click for electron selection
+  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // Check if the click is on an electron
+    for (const electronData of electronPositionsRef.current) {
+      const dx = electronData.position.x - x;
+      const dy = electronData.position.y - y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // If click is within electron radius (we use 10px for better UX)
+      if (distance < 10) {
+        setSelectedElectron(electronData);
+        if (onElectronSelect) {
+          onElectronSelect(electronData);
+        }
+        return;
+      }
+    }
+    
+    // If no electron was clicked, deselect
+    setSelectedElectron(null);
   };
 
   useEffect(() => {
@@ -84,13 +151,6 @@ const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol 
       ctx.fillStyle = '#ff4545';
       ctx.fill();
       
-      // Removing the nucleus detail (the white dot)
-      // This code is removed:
-      // ctx.beginPath();
-      // ctx.arc(centerX - nucleusRadius * 0.3, centerY - nucleusRadius * 0.3, nucleusRadius * 0.2, 0, Math.PI * 2);
-      // ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-      // ctx.fill();
-      
       // Draw element symbol in the nucleus
       ctx.font = `bold ${nucleusRadius}px Arial`;
       ctx.textAlign = 'center';
@@ -100,6 +160,9 @@ const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol 
       
       // Get electron configuration
       const electronShells = getElectronShells(atomicNumber);
+      
+      // Reset electron positions
+      electronPositionsRef.current = [];
       
       // Draw electron shells
       electronShells.forEach((electrons, shellIndex) => {
@@ -118,13 +181,34 @@ const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol 
           const electronX = centerX + Math.cos(angle) * shellRadius;
           const electronY = centerY + Math.sin(angle) * shellRadius;
           
+          // Store electron position and data
+          const quantumNumbers = calculateQuantumNumbers(shellIndex, i);
+          electronPositionsRef.current.push({
+            shellNumber: shellIndex,
+            electronIndex: i,
+            quantumNumbers,
+            position: { x: electronX, y: electronY }
+          });
+          
+          // Check if this electron is selected
+          const isSelected = selectedElectron && 
+            selectedElectron.shellNumber === shellIndex && 
+            selectedElectron.electronIndex === i;
+          
           // Electron glow
           const electronGradient = ctx.createRadialGradient(
             electronX, electronY, 0,
             electronX, electronY, 8
           );
-          electronGradient.addColorStop(0, 'rgba(80, 200, 255, 0.8)');
-          electronGradient.addColorStop(1, 'rgba(80, 200, 255, 0.0)');
+          
+          if (isSelected) {
+            // Use a different color for selected electron
+            electronGradient.addColorStop(0, 'rgba(255, 255, 0, 0.8)');
+            electronGradient.addColorStop(1, 'rgba(255, 255, 0, 0.0)');
+          } else {
+            electronGradient.addColorStop(0, 'rgba(80, 200, 255, 0.8)');
+            electronGradient.addColorStop(1, 'rgba(80, 200, 255, 0.0)');
+          }
           
           ctx.beginPath();
           ctx.arc(electronX, electronY, 8, 0, Math.PI * 2);
@@ -134,7 +218,7 @@ const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol 
           // Electron
           ctx.beginPath();
           ctx.arc(electronX, electronY, 3, 0, Math.PI * 2);
-          ctx.fillStyle = '#50c8ff';
+          ctx.fillStyle = isSelected ? '#ffff00' : '#50c8ff';
           ctx.fill();
         }
       });
@@ -171,13 +255,14 @@ const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol 
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [atomicNumber, symbol]);
+  }, [atomicNumber, symbol, selectedElectron]);
 
   return (
     <div className="atomic-structure-container h-full w-full">
       <canvas 
         ref={canvasRef} 
-        className="w-full h-full"
+        className="w-full h-full cursor-pointer"
+        onClick={handleCanvasClick}
       />
     </div>
   );

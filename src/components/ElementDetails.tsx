@@ -1,9 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { X } from 'lucide-react';
-import AtomicStructure from './AtomicStructure';
+import AtomicStructure, { ElectronData } from './AtomicStructure';
+import ElectronSpinVisualization from './ElectronSpinVisualization';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { Slider } from "@/components/ui/slider";
 
 interface ElementDetailsProps {
   isOpen: boolean;
@@ -23,6 +25,9 @@ interface ElementDetailsProps {
 
 const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
   if (!element) return null;
+
+  const [selectedElectron, setSelectedElectron] = useState<ElectronData | null>(null);
+  const [magneticField, setMagneticField] = useState<number>(1.0); // Default 1.0 Tesla
 
   // Function to get category label
   const getCategoryLabel = (category: string) => {
@@ -52,6 +57,14 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
       case 'actinoid': return 'from-element-actinoid/30 to-transparent';
       default: return 'from-gray-500/30 to-transparent';
     }
+  };
+
+  const handleElectronSelect = (electronData: ElectronData) => {
+    setSelectedElectron(electronData);
+  };
+
+  const handleMagneticFieldChange = (value: number[]) => {
+    setMagneticField(value[0]);
   };
 
   return (
@@ -87,8 +100,40 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
           
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
             {/* Atomic Structure Visualization */}
-            <div className="w-full md:w-2/3 h-[40vh] md:h-full border-b md:border-b-0 md:border-r border-gray-800">
-              <AtomicStructure atomicNumber={element.number} symbol={element.symbol} />
+            <div className="w-full md:w-1/3 h-[30vh] md:h-full border-b md:border-b-0 md:border-r border-gray-800">
+              <div className="p-3 text-sm bg-gray-800/50">
+                <h3 className="font-medium mb-1">Atomic Structure</h3>
+                <p className="text-xs text-gray-400">Click on an electron to select it.</p>
+              </div>
+              <AtomicStructure 
+                atomicNumber={element.number} 
+                symbol={element.symbol}
+                onElectronSelect={handleElectronSelect}
+              />
+            </div>
+            
+            {/* Electron Spin Visualization */}
+            <div className="w-full md:w-1/3 h-[30vh] md:h-full border-b md:border-b-0 md:border-r border-gray-800">
+              <div className="p-3 bg-gray-800/50 flex justify-between items-center">
+                <h3 className="font-medium">Electron Spin</h3>
+                <div className="flex items-center space-x-2 w-1/2">
+                  <span className="text-xs text-gray-400">Magnetic Field (T):</span>
+                  <Slider
+                    value={[magneticField]}
+                    min={0.1}
+                    max={10}
+                    step={0.1}
+                    onValueChange={handleMagneticFieldChange}
+                    className="w-32"
+                  />
+                  <span className="text-xs">{magneticField.toFixed(1)}</span>
+                </div>
+              </div>
+              <ElectronSpinVisualization 
+                electronData={selectedElectron}
+                atomicNumber={element.number}
+                magneticField={magneticField}
+              />
             </div>
             
             {/* Element Information */}
@@ -113,6 +158,21 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
                     </p>
                   </div>
                 )}
+
+                <div>
+                  <h3 className="text-lg font-medium text-gray-300 mb-2">Spin Theory</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">
+                    Electron spin is a fundamental quantum property described by the Dirac equation. 
+                    For element {element.name} (Z={element.number}), 
+                    {element.number > 30 ? 
+                      " relativistic effects significantly influence electron behavior." : 
+                      " non-relativistic models approximate electron behavior well."}
+                  </p>
+                  <p className="text-sm text-gray-400 mt-2 leading-relaxed">
+                    The spin precession frequency (ω<sub>s</sub>) follows: ω<sub>s</sub> = (eB/m<sub>e</sub>)(g/2-1+1/γ)
+                    where g≈2.002 is the g-factor and γ is the relativistic Lorentz factor.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
