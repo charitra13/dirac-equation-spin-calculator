@@ -6,6 +6,7 @@ import AtomicStructure, { ElectronData } from './AtomicStructure';
 import ElectronSpinVisualization from './ElectronSpinVisualization';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Slider } from "@/components/ui/slider";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ElementDetailsProps {
   isOpen: boolean;
@@ -103,7 +104,7 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
             <div className="w-full md:w-1/3 h-[30vh] md:h-full border-b md:border-b-0 md:border-r border-gray-800">
               <div className="p-3 text-sm bg-gray-800/50">
                 <h3 className="font-medium mb-1">Atomic Structure</h3>
-                <p className="text-xs text-gray-400">Click on an electron to select it.</p>
+                <p className="text-xs text-gray-400">Click on an electron to select it. Click on the nucleus to toggle rotation.</p>
               </div>
               <AtomicStructure 
                 atomicNumber={element.number} 
@@ -137,43 +138,47 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
             </div>
             
             {/* Element Information */}
-            <div className="w-full md:w-1/3 p-4 sm:p-6 overflow-y-auto">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-300 mb-2">Description</h3>
-                  <p id="element-description" className="text-sm text-gray-400 leading-relaxed">{element.description}</p>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium text-gray-300 mb-2">Electron Configuration</h3>
-                  <p className="text-sm font-mono text-gray-400">{element.electronConfiguration}</p>
-                </div>
-                
-                {element.discoveredBy && (
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-300 mb-2">Discovery</h3>
-                    <p className="text-sm text-gray-400">
-                      Discovered by {element.discoveredBy}
-                      {element.yearDiscovered && ` in ${element.yearDiscovered}`}
-                    </p>
-                  </div>
-                )}
+            <div className="w-full md:w-1/3 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="p-4 sm:p-6">
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-300 mb-2">Description</h3>
+                      <p id="element-description" className="text-sm text-gray-400 leading-relaxed">{element.description}</p>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-300 mb-2">Electron Configuration</h3>
+                      <p className="text-sm font-mono text-gray-400">{element.electronConfiguration}</p>
+                    </div>
+                    
+                    {element.discoveredBy && (
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-300 mb-2">Discovery</h3>
+                        <p className="text-sm text-gray-400">
+                          Discovered by {element.discoveredBy}
+                          {element.yearDiscovered && ` in ${element.yearDiscovered}`}
+                        </p>
+                      </div>
+                    )}
 
-                <div>
-                  <h3 className="text-lg font-medium text-gray-300 mb-2">Spin Theory</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">
-                    Electron spin is a fundamental quantum property described by the Dirac equation. 
-                    For element {element.name} (Z={element.number}), 
-                    {element.number > 30 ? 
-                      " relativistic effects significantly influence electron behavior." : 
-                      " non-relativistic models approximate electron behavior well."}
-                  </p>
-                  <p className="text-sm text-gray-400 mt-2 leading-relaxed">
-                    The spin precession frequency (ω<sub>s</sub>) follows: ω<sub>s</sub> = (eB/m<sub>e</sub>)(g/2-1+1/γ)
-                    where g≈2.002 is the g-factor and γ is the relativistic Lorentz factor.
-                  </p>
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-300 mb-2">Spin Theory</h3>
+                      <p className="text-sm text-gray-400 leading-relaxed">
+                        Electron spin is a fundamental quantum property described by the Dirac equation. 
+                        For element {element.name} (Z={element.number}), 
+                        {element.number > 30 ? 
+                          " relativistic effects significantly influence electron behavior." : 
+                          " non-relativistic models approximate electron behavior well."}
+                      </p>
+                      <p className="text-sm text-gray-400 mt-2 leading-relaxed">
+                        The spin precession frequency (ω<sub>s</sub>) follows: ω<sub>s</sub> = (eB/m<sub>e</sub>)(g/2-1+1/γ)
+                        where g≈2.002 is the g-factor and γ is the relativistic Lorentz factor.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </ScrollArea>
             </div>
           </div>
         </div>

@@ -26,6 +26,7 @@ const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol,
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [selectedElectron, setSelectedElectron] = useState<ElectronData | null>(null);
   const electronPositionsRef = useRef<ElectronData[]>([]);
+  const [isRotating, setIsRotating] = useState<boolean>(true);
 
   // Calculate electron configuration
   const getElectronShells = (atomicNumber: number) => {
@@ -77,6 +78,22 @@ const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol,
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
+    
+    // Check if nucleus was clicked
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const maxRadius = Math.min(canvas.width, canvas.height) * 0.4;
+    const nucleusRadius = maxRadius * 0.2;
+    
+    const dx = centerX - x;
+    const dy = centerY - y;
+    const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distanceToCenter <= nucleusRadius) {
+      // Nucleus clicked, toggle rotation
+      setIsRotating(prevState => !prevState);
+      return;
+    }
     
     // Check if the click is on an electron
     for (const electronData of electronPositionsRef.current) {
@@ -233,7 +250,9 @@ const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol,
     let angle = 0;
     
     const animate = () => {
-      angle += 0.005;
+      if (isRotating) {
+        angle += 0.005;
+      }
       
       // Define centerX and centerY inside animate function since they're needed here
       const centerX = canvas.width / 2;
@@ -255,7 +274,7 @@ const AtomicStructure: React.FC<AtomicStructureProps> = ({ atomicNumber, symbol,
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [atomicNumber, symbol, selectedElectron]);
+  }, [atomicNumber, symbol, selectedElectron, isRotating]);
 
   return (
     <div className="atomic-structure-container h-full w-full">
