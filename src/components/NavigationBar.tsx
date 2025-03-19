@@ -19,21 +19,21 @@ const NavigationBar = () => {
           <Button asChild variant="ghost" className="flex items-center text-gray-300 hover:text-neon-blue hover:bg-[#252525]">
             <Link to="/">
               <Atom className="mr-1" />
-              <span>Periodic Table</span>
-            </Link>
-          </Button>
-          
-          <Button asChild variant="ghost" className="flex items-center text-gray-300 hover:text-neon-green hover:bg-[#252525]">
-            <Link to="/about">
-              <Info className="mr-1" />
-              <span>About Us</span>
+              <span>Dirac Equation</span>
             </Link>
           </Button>
           
           <Button asChild variant="ghost" className="flex items-center text-gray-300 hover:text-neon-purple hover:bg-[#252525]">
             <Link to="/quantum">
               <Sparkles className="mr-1" />
-              <span>Quantum Simulation</span>
+              <span>Quantum Logic Gates</span>
+            </Link>
+          </Button>
+          
+          <Button asChild variant="ghost" className="flex items-center text-gray-300 hover:text-neon-green hover:bg-[#252525] ml-auto">
+            <Link to="/about">
+              <Info className="mr-1" />
+              <span>About Us</span>
             </Link>
           </Button>
         </div>
