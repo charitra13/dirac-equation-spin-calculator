@@ -2,12 +2,14 @@
 import React, { useState } from 'react';
 import { Atom, Zap, Activity, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import AtomicStructure from '@/components/AtomicStructure';
+import AtomicStructure, { ElectronData } from '@/components/AtomicStructure';
 import ElectronSpinVisualization from '@/components/ElectronSpinVisualization';
 
 const Quantum = () => {
   const [selectedElement, setSelectedElement] = useState('hydrogen');
   const [activeSimulation, setActiveSimulation] = useState('atomic');
+  const [selectedElectron, setSelectedElectron] = useState<ElectronData | null>(null);
+  const [magneticField, setMagneticField] = useState(2.0); // Default magnetic field in Tesla
 
   const elements = [
     { id: 'hydrogen', name: 'Hydrogen', symbol: 'H', protons: 1, neutrons: 0, electrons: 1 },
@@ -19,13 +21,18 @@ const Quantum = () => {
 
   const currentElement = elements.find(el => el.id === selectedElement) || elements[0];
 
+  const handleElectronSelect = (electronData: ElectronData) => {
+    setSelectedElectron(electronData);
+    setActiveSimulation('spin');
+  };
+
   return (
     <div className="min-h-screen bg-[#121212] text-white flex flex-col">
       <main className="flex-1 flex flex-col container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto w-full">
           <h1 className="text-3xl md:text-4xl font-bold mb-8 flex items-center justify-center gap-3 text-center">
-            <Sparkles className="w-8 h-8 text-neon-purple" />
-            <span className="bg-gradient-to-r from-neon-purple via-neon-pink to-neon-blue bg-clip-text text-transparent">
+            <Sparkles className="w-8 h-8 text-purple-500" />
+            <span className="bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 bg-clip-text text-transparent">
               Quantum Simulation Lab
             </span>
           </h1>
@@ -33,7 +40,7 @@ const Quantum = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div className="lg:col-span-1 bg-[#1a1a1a] rounded-lg p-6 border border-gray-800">
               <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-                <Atom className="text-neon-blue" />
+                <Atom className="text-blue-500" />
                 Element Selection
               </h2>
               <div className="space-y-2">
@@ -41,7 +48,7 @@ const Quantum = () => {
                   <Button
                     key={element.id}
                     variant={selectedElement === element.id ? "default" : "outline"}
-                    className={`w-full justify-start ${selectedElement === element.id ? 'bg-neon-blue/20 border-neon-blue text-white' : 'hover:border-neon-blue'}`}
+                    className={`w-full justify-start ${selectedElement === element.id ? 'bg-blue-500/20 border-blue-500 text-white' : 'hover:border-blue-500'}`}
                     onClick={() => setSelectedElement(element.id)}
                   >
                     <span className="font-bold mr-2">{element.symbol}</span>
@@ -81,7 +88,7 @@ const Quantum = () => {
               <div className="flex space-x-4 mb-6">
                 <Button
                   variant={activeSimulation === 'atomic' ? "default" : "outline"}
-                  className={activeSimulation === 'atomic' ? 'bg-neon-green/20 border-neon-green' : 'hover:border-neon-green'}
+                  className={activeSimulation === 'atomic' ? 'bg-green-500/20 border-green-500' : 'hover:border-green-500'}
                   onClick={() => setActiveSimulation('atomic')}
                 >
                   <Atom className="mr-2" />
@@ -89,7 +96,7 @@ const Quantum = () => {
                 </Button>
                 <Button
                   variant={activeSimulation === 'spin' ? "default" : "outline"}
-                  className={activeSimulation === 'spin' ? 'bg-neon-purple/20 border-neon-purple' : 'hover:border-neon-purple'}
+                  className={activeSimulation === 'spin' ? 'bg-purple-500/20 border-purple-500' : 'hover:border-purple-500'}
                   onClick={() => setActiveSimulation('spin')}
                 >
                   <Activity className="mr-2" />
@@ -99,15 +106,23 @@ const Quantum = () => {
 
               <div className="bg-[#0a0a0a] rounded-lg h-[400px] flex items-center justify-center border border-gray-700 overflow-hidden">
                 {activeSimulation === 'atomic' ? (
-                  <AtomicStructure element={currentElement} />
+                  <AtomicStructure 
+                    atomicNumber={currentElement.protons} 
+                    symbol={currentElement.symbol} 
+                    onElectronSelect={handleElectronSelect}
+                  />
                 ) : (
-                  <ElectronSpinVisualization electrons={currentElement.electrons} />
+                  <ElectronSpinVisualization 
+                    electronData={selectedElectron}
+                    atomicNumber={currentElement.protons}
+                    magneticField={magneticField}
+                  />
                 )}
               </div>
 
               <div className="mt-6 bg-[#252525] p-4 rounded-lg">
                 <h3 className="font-semibold flex items-center gap-2 mb-2">
-                  <Zap className="text-neon-yellow w-5 h-5" />
+                  <Zap className="text-yellow-500 w-5 h-5" />
                   Quantum Facts
                 </h3>
                 <p className="text-gray-300 text-sm">
