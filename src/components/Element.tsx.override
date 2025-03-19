@@ -1,0 +1,31 @@
+"use client";
+
+import React from 'react';
+import { useRouter } from 'next/navigation';
+
+interface ElementProps {
+  atomicNumber: number;
+  symbol: string;
+  name: string;
+  atomicMass: number;
+  category: string;
+}
+
+const Element: React.FC<ElementProps> = ({ atomicNumber, symbol, name, atomicMass, category }) => {
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push(`/elements/${symbol.toLowerCase()}`);
+  };
+
+  return (
+    <div className={`element-card ${category}`} onClick={handleClick}>
+      <div className="element-number">{atomicNumber}</div>
+      <div className="element-symbol" style={{ fontSize: '1.5em' }}>{symbol}</div>
+      <div className="element-name">{name}</div>
+      <div className="element-mass">{atomicMass.toFixed(2)}</div>
+    </div>
+  );
+};
+
+export default Element;

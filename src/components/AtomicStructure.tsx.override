@@ -1,0 +1,107 @@
+"use client";
+
+import React, { useState, useEffect, useRef } from 'react';
+import { atom, elements } from "@/data/elements";
+
+interface AtomicStructureProps {
+  element: atom;
+}
+
+const AtomicStructure: React.FC<AtomicStructureProps> = ({ element }) => {
+  const [electronOrbitals, setElectronOrbitals] = useState<number[][]>([]);
+  const [activeElectrons, setActiveElectrons] = useState<number[]>([]);
+  const [showAllElectrons, setShowAllElectrons] = useState(false);
+  const animationFrameRef = useRef<number>(0);
+
+  useEffect(() => {
+    const shells = element.shells;
+    const orbitals: number[][] = shells.map(shell => {
+      const electrons = [];
+      for (let i = 0; i < shell; i++) {
+        electrons.push(0);
+      }
+      return electrons;
+    });
+    setElectronOrbitals(orbitals);
+    setActiveElectrons(shells);
+  }, [element]);
+
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  const toggleElectrons = () => {
+    setShowAllElectrons(!showAllElectrons);
+  };
+
+  const animateElectrons = () => {
+    setElectronOrbitals(prevOrbitals => {
+      return prevOrbitals.map(shell => {
+        return shell.map(() => Math.random());
+      });
+    });
+
+    animationFrameRef.current = requestAnimationFrame(animateElectrons);
+  };
+
+  const stopAnimation = () => {
+    cancelAnimationFrame(animationFrameRef.current);
+  };
+
+  return (
+    <div className="atomic-structure-container p-4">
+      <h3 className="text-lg font-semibold text-white mb-2">Atomic Structure</h3>
+      <div className="relative w-64 h-64 mx-auto">
+        {electronOrbitals.map((shell, shellIndex) => (
+          <div
+            key={shellIndex}
+            className="absolute rounded-full border border-gray-500"
+            style={{
+              width: `${(shellIndex + 1) * 20}%`,
+              height: `${(shellIndex + 1) * 20}%`,
+              top: `${50 - (shellIndex + 1) * 10}%`,
+              left: `${50 - (shellIndex + 1) * 10}%`,
+            }}
+          >
+            {shell.map((_, electronIndex) => {
+              const angle = Math.random() * 360;
+              const x = 50 + 40 * Math.cos(angle * Math.PI / 180);
+              const y = 50 + 40 * Math.sin(angle * Math.PI / 180);
+
+              return (
+                <div
+                  key={electronIndex}
+                  className="absolute w-2 h-2 rounded-full bg-blue-400"
+                  style={{
+                    top: `${y}%`,
+                    left: `${x}%`,
+                  }}
+                />
+              );
+            })}
+          </div>
+        ))}
+        <div className="absolute w-8 h-8 rounded-full bg-red-500 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+          {/* Nucleus */}
+        </div>
+      </div>
+      <div className="mt-4 flex justify-center">
+        <button onClick={toggleElectrons} className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded mr-2">
+          {showAllElectrons ? 'Hide Electrons' : 'Show All Electrons'}
+        </button>
+        <button onClick={animateElectrons} className="bg-green-700 hover:bg-green-600 text-white font-bold py-2 px-4 rounded mr-2">
+          Animate Electrons
+        </button>
+        <button onClick={stopAnimation} className="bg-red-700 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
+          Stop Animation
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default AtomicStructure;

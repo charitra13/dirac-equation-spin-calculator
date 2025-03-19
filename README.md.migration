@@ -1,0 +1,24 @@
+
+# Next.js Migration Instructions
+
+Since we couldn't modify the protected `tsconfig.json` file, follow these instructions to complete the migration:
+
+1. Add the following scripts to your package.json:
+   ```
+   "scripts": {
+     "dev": "next dev",
+     "build": "next build",
+     "start": "next start"
+   }
+   ```
+
+2. Add the `.client` directive to all component files to ensure proper client-side rendering.
+
+3. The migration creates a hybrid structure that works with both old files and new Next.js app router.
+
+4. To run the application:
+   ```
+   npm run dev
+   ```
+
+5. Important: You may need to manually add "use client" directive to other component files if they use client-side features and aren't already listed.

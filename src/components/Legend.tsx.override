@@ -1,0 +1,29 @@
+"use client";
+
+import React from 'react';
+
+const Legend = () => {
+  return (
+    <div className="flex flex-wrap justify-center gap-4">
+      <LegendItem color="border-element-alkali" label="Alkali Metals" />
+      <LegendItem color="border-element-alkaline" label="Alkaline Earth Metals" />
+      <LegendItem color="border-element-transition" label="Transition Metals" />
+      <LegendItem color="border-element-poor" label="Poor Metals" />
+      <LegendItem color="border-element-nonmetal" label="Nonmetals" />
+      <LegendItem color="border-element-noble" label="Noble Gases" />
+      <LegendItem color="border-element-lanthanoid" label="Lanthanoids" />
+      <LegendItem color="border-element-actinoid" label="Actinoids" />
+    </div>
+  );
+};
+
+const LegendItem = ({ color, label }: { color: string; label: string }) => {
+  return (
+    <div className="flex items-center">
+      <div className={`w-5 h-5 rounded-full mr-2 ${color}`}></div>
+      <span className="text-sm text-gray-400">{label}</span>
+    </div>
+  );
+};
+
+export default Legend;
