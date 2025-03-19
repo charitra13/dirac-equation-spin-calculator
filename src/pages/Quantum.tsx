@@ -1,8 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import { CircuitBoard, RotateCcw, Zap, Cpu, Code, Shuffle, Box, GitMerge, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const QUANTUM_GATES = {
   X: {
@@ -143,13 +150,23 @@ const Qubit = ({ index, state, onGateApply }) => {
 const GateNode = ({ gate, onClick }) => {
   const gateInfo = QUANTUM_GATES[gate];
   return (
-    <div 
-      className={`w-12 h-12 rounded-md flex items-center justify-center cursor-pointer transition-all
-                  hover:scale-110 text-white font-bold text-lg border-2 ${gateInfo.color}`}
-      onClick={onClick}
-    >
-      {gateInfo.symbol}
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div 
+          className={`w-12 h-12 rounded-md flex items-center justify-center cursor-pointer transition-all
+                    hover:scale-110 text-white font-bold text-lg border-2 ${gateInfo.color}`}
+          onClick={onClick}
+        >
+          {gateInfo.symbol}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-[200px] bg-gray-800 border-gray-700 text-white">
+        <div className="space-y-1">
+          <p className="font-bold">{gateInfo.name}</p>
+          <p className="text-xs">{gateInfo.description}</p>
+        </div>
+      </TooltipContent>
+    </Tooltip>
   );
 };
 
@@ -334,46 +351,66 @@ const Quantum = () => {
                 </div>
               </div>
               
-              <Tabs defaultValue="single" className="mb-4">
-                <TabsList className="grid grid-cols-2 mb-4 bg-gray-800">
-                  <TabsTrigger value="single">Single Qubit</TabsTrigger>
-                  <TabsTrigger value="multi">Multi Qubit</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="single" className="mt-0">
-                  <div className="grid grid-cols-2 gap-2">
-                    {['X', 'Y', 'Z', 'H', 'S', 'T'].map(gate => (
-                      <Button
-                        key={gate}
-                        variant={selectedGate === gate ? "default" : "outline"}
-                        className={`${selectedGate === gate ? `bg-opacity-20 border-2 ${QUANTUM_GATES[gate].color}` : ''}`}
-                        onClick={() => setSelectedGate(gate)}
-                      >
-                        {QUANTUM_GATES[gate].symbol}
-                      </Button>
-                    ))}
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="multi" className="mt-0">
-                  <div className="grid grid-cols-2 gap-2">
-                    {['CNOT', 'SWAP', 'CCNOT'].map(gate => (
-                      <Button
-                        key={gate}
-                        variant={selectedGate === gate ? "default" : "outline"}
-                        className={`${selectedGate === gate ? `bg-opacity-20 border-2 ${QUANTUM_GATES[gate].color}` : ''}`}
-                        onClick={() => setSelectedGate(gate)}
-                        disabled={
-                          (QUANTUM_GATES[gate].requiresTwo && numQubits < 2) || 
-                          (QUANTUM_GATES[gate].requiresThree && numQubits < 3)
-                        }
-                      >
-                        {QUANTUM_GATES[gate].symbol}
-                      </Button>
-                    ))}
-                  </div>
-                </TabsContent>
-              </Tabs>
+              <TooltipProvider>
+                <Tabs defaultValue="single" className="mb-4">
+                  <TabsList className="grid grid-cols-2 mb-4 bg-gray-800">
+                    <TabsTrigger value="single">Single Qubit</TabsTrigger>
+                    <TabsTrigger value="multi">Multi Qubit</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="single" className="mt-0">
+                    <div className="grid grid-cols-2 gap-2">
+                      {['X', 'Y', 'Z', 'H', 'S', 'T'].map(gate => (
+                        <Tooltip key={gate}>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant={selectedGate === gate ? "default" : "outline"}
+                              className={`${selectedGate === gate ? `bg-opacity-20 border-2 ${QUANTUM_GATES[gate].color}` : ''}`}
+                              onClick={() => setSelectedGate(gate)}
+                            >
+                              {QUANTUM_GATES[gate].symbol}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-800 border-gray-700 text-white">
+                            <div className="space-y-1">
+                              <p className="font-bold">{QUANTUM_GATES[gate].name}</p>
+                              <p className="text-xs">{QUANTUM_GATES[gate].description}</p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      ))}
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="multi" className="mt-0">
+                    <div className="grid grid-cols-2 gap-2">
+                      {['CNOT', 'SWAP', 'CCNOT'].map(gate => (
+                        <Tooltip key={gate}>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant={selectedGate === gate ? "default" : "outline"}
+                              className={`${selectedGate === gate ? `bg-opacity-20 border-2 ${QUANTUM_GATES[gate].color}` : ''}`}
+                              onClick={() => setSelectedGate(gate)}
+                              disabled={
+                                (QUANTUM_GATES[gate].requiresTwo && numQubits < 2) || 
+                                (QUANTUM_GATES[gate].requiresThree && numQubits < 3)
+                              }
+                            >
+                              {QUANTUM_GATES[gate].symbol}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-800 border-gray-700 text-white">
+                            <div className="space-y-1">
+                              <p className="font-bold">{QUANTUM_GATES[gate].name}</p>
+                              <p className="text-xs">{QUANTUM_GATES[gate].description}</p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      ))}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </TooltipProvider>
               
               <div className="mt-4">
                 <h3 className="text-xl font-semibold mb-2 flex items-center gap-2">
