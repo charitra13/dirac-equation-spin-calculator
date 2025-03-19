@@ -213,6 +213,33 @@ const QuantumCircuit = ({ circuit, qubits, onReset }) => {
 };
 
 const BlochSphere = ({ qubitState }) => {
+  // Calculate the position of the state vector based on qubit state
+  let pointX = 0;
+  let pointY = 0;
+  let pointZ = 0;
+  
+  // Position the state vector according to the qubit state
+  if (qubitState === '|0⟩') {
+    // |0⟩ is at the north pole of the Bloch sphere
+    pointZ = -30; // -30px from center toward top
+  } else if (qubitState === '|1⟩') {
+    // |1⟩ is at the south pole of the Bloch sphere
+    pointZ = 30; // 30px from center toward bottom
+  } else if (qubitState === '|+⟩') {
+    // |+⟩ is on the positive x-axis
+    pointX = 30; // 30px from center toward right
+    pointZ = 0;
+  } else if (qubitState === '|-⟩') {
+    // |-⟩ is on the negative x-axis
+    pointX = -30; // -30px from center toward left
+    pointZ = 0;
+  }
+
+  const stateStyle = {
+    transform: `translate(${pointX}px, ${pointZ}px)`,
+    transition: 'transform 0.5s ease-out',
+  };
+
   return (
     <div className="bg-[#1a1a1a] rounded-lg p-4 border border-gray-800 flex flex-col items-center">
       <h3 className="text-xl font-semibold mb-4">Bloch Sphere</h3>
@@ -227,7 +254,10 @@ const BlochSphere = ({ qubitState }) => {
         <div className="absolute left-0 top-1/2 -translate-y-1/2 text-red-500 text-xs ml-1">|-⟩</div>
         <div className="absolute right-0 top-1/2 -translate-y-1/2 text-red-500 text-xs mr-1">|+⟩</div>
         
-        <div className="w-3 h-3 bg-white rounded-full shadow-[0_0_15px_10px_rgba(255,255,255,0.3)]"></div>
+        <div 
+          className="w-3 h-3 bg-white rounded-full shadow-[0_0_15px_10px_rgba(255,255,255,0.3)]"
+          style={stateStyle}
+        ></div>
       </div>
       <div className="mt-4 text-center">
         <p className="text-white">Current State: {qubitState}</p>
