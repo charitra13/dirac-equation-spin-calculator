@@ -15,15 +15,21 @@ const MatrixDisplay = ({ gate }: MatrixDisplayProps) => {
       <div className="flex justify-center">
         <div className="bg-gray-900 p-4 rounded-lg">
           <div className="flex flex-col">
-            {gateInfo.matrix.map((row, i) => (
-              <div key={i} className="flex justify-center">
-                {row.map((element, j) => (
-                  <div key={j} className="w-12 h-12 flex items-center justify-center text-white">
-                    {element}
-                  </div>
-                ))}
+            {gateInfo.matrix ? (
+              gateInfo.matrix.map((row, i) => (
+                <div key={i} className="flex justify-center">
+                  {row.map((element, j) => (
+                    <div key={j} className="w-12 h-12 flex items-center justify-center text-white">
+                      {element}
+                    </div>
+                  ))}
+                </div>
+              ))
+            ) : (
+              <div className="w-48 h-48 flex items-center justify-center text-gray-400">
+                Matrix representation not available
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

@@ -1,6 +1,17 @@
 
+// Define a consistent type for quantum gates
+type QuantumGateInfo = {
+  name: string;
+  symbol: string;
+  description: string;
+  color: string;
+  matrix?: (string | number)[][];
+  requiresTwo?: boolean;
+  requiresThree?: boolean;
+};
+
 // Defines the quantum gates and their properties
-export const QUANTUM_GATES = {
+export const QUANTUM_GATES: Record<string, QuantumGateInfo> = {
   X: {
     name: 'Pauli-X (NOT)',
     symbol: 'X',
@@ -90,6 +101,17 @@ export const QUANTUM_GATES = {
   CCNOT: {
     name: 'Toffoli',
     symbol: 'T',
+    // Add matrix for CCNOT gate
+    matrix: [
+      [1, 0, 0, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0, 0, 0],
+      [0, 0, 1, 0, 0, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0, 0, 0],
+      [0, 0, 0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 0, 0, 1, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 1],
+      [0, 0, 0, 0, 0, 0, 1, 0]
+    ],
     description: 'Controlled-Controlled-NOT gate. Requires 3 qubits.',
     color: 'border-indigo-500',
     requiresThree: true
