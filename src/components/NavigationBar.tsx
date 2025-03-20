@@ -26,7 +26,7 @@ const NavigationBar = () => {
           <Button asChild variant="ghost" className="flex items-center text-gray-300 hover:text-neon-purple hover:bg-[#252525]">
             <Link to="/quantum">
               <Sparkles className="mr-1" />
-              <span>Quantum Logic Gates</span>
+              <span>Quantum Simulator</span>
             </Link>
           </Button>
           

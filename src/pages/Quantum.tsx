@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CircuitBoard, RotateCcw, Zap, Cpu, Code, Shuffle, Box, GitMerge, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import QuantumGuide from '@/components/QuantumGuide';
 
 const QUANTUM_GATES = {
   X: {
@@ -213,25 +213,19 @@ const QuantumCircuit = ({ circuit, qubits, onReset }) => {
 };
 
 const BlochSphere = ({ qubitState }) => {
-  // Calculate the position of the state vector based on qubit state
   let pointX = 0;
   let pointY = 0;
   let pointZ = 0;
   
-  // Position the state vector according to the qubit state
   if (qubitState === '|0⟩') {
-    // |0⟩ is at the north pole of the Bloch sphere
-    pointZ = -30; // -30px from center toward top
+    pointZ = -30;
   } else if (qubitState === '|1⟩') {
-    // |1⟩ is at the south pole of the Bloch sphere
-    pointZ = 30; // 30px from center toward bottom
+    pointZ = 30;
   } else if (qubitState === '|+⟩') {
-    // |+⟩ is on the positive x-axis
-    pointX = 30; // 30px from center toward right
+    pointX = 30;
     pointZ = 0;
   } else if (qubitState === '|-⟩') {
-    // |-⟩ is on the negative x-axis
-    pointX = -30; // -30px from center toward left
+    pointX = -30;
     pointZ = 0;
   }
 
@@ -357,6 +351,8 @@ const Quantum = () => {
               Quantum Logic Gates Simulator
             </span>
           </h1>
+          
+          <QuantumGuide />
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div className="lg:col-span-1 bg-[#1a1a1a] rounded-lg p-6 border border-gray-800">
