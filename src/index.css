@@ -25,15 +25,9 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
     --radius: 0.5rem;
-    
-    /* Neon colors */
-    --neon-red: #FF0055;
-    --neon-blue: #00DDFF;
-    --neon-green: #00FF66;
-    --neon-purple: #BC00FF;
-    --neon-yellow: #FFDD00;
-    --neon-orange: #FF7700;
-    --neon-pink: #FF00AA;
+    --neon-blue: #00f9ff;
+    --neon-green: #00ff66;
+    --neon-purple: #bc00ff;
   }
 }
 
@@ -55,61 +49,4 @@
 @keyframes circle-left {
   from { transform: translateX(-50%) rotate(0deg) translateY(-24px); }
   to { transform: translateX(-50%) rotate(-360deg) translateY(-24px); }
-}
-
-/* Neon element styling */
-@layer components {
-  .element-card {
-    @apply bg-black/50 p-0.5 h-full w-full flex flex-col justify-between;
-    transition: all 0.3s ease;
-  }
-  
-  .alkali {
-    @apply border-element-alkali;
-  }
-  
-  .alkaline {
-    @apply border-element-alkaline;
-  }
-  
-  .transition {
-    @apply border-element-transition;
-  }
-  
-  .poor {
-    @apply border-element-poor;
-  }
-  
-  .nonmetal {
-    @apply border-element-nonmetal;
-  }
-  
-  .noble {
-    @apply border-element-noble;
-  }
-  
-  .lanthanoid {
-    @apply border-element-lanthanoid;
-  }
-  
-  .actinoid {
-    @apply border-element-actinoid;
-  }
-  
-  /* Legend styling */
-  .alkali, .alkaline, .transition, .poor, .nonmetal, .noble, .lanthanoid, .actinoid {
-    @apply rounded;
-  }
-}
-
-/* Animation for pulsing glow */
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 1;
-    box-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
-  }
-  50% {
-    opacity: 0.7;
-    box-shadow: 0 0 10px currentColor, 0 0 15px currentColor;
-  }
 }
