@@ -43,7 +43,7 @@ const NavigationBar = () => {
           <Button 
             asChild 
             variant="ghost" 
-            className={`flex items-center ${location.pathname === '/about' ? 'text-neon-green bg-[#252525]' : 'text-gray-300'} hover:text-neon-green hover:bg-[#252525] ml-auto`}
+            className={`flex items-center ${location.pathname === '/about' ? 'text-neon-green bg-[#252525]' : 'text-gray-300'} hover:text-neon-green hover:bg-[#252525]`}
           >
             <Link to="/about">
               <Info className="mr-1" />
