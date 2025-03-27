@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Atom, Info, Sparkles } from 'lucide-react';
+import { Atom, Info } from 'lucide-react';
 import { Button } from './ui/button';
 
 const NavigationBar = () => {
@@ -20,13 +20,6 @@ const NavigationBar = () => {
             <Link to="/">
               <Atom className="mr-1" />
               <span>Dirac Equation</span>
-            </Link>
-          </Button>
-          
-          <Button asChild variant="ghost" className="flex items-center text-gray-300 hover:text-neon-purple hover:bg-[#252525]">
-            <Link to="/quantum">
-              <Sparkles className="mr-1" />
-              <span>Quantum Simulator</span>
             </Link>
           </Button>
           
