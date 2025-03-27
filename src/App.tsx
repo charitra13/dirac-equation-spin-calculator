@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
-import PolarizationSimulator from "./pages/PolarizationSimulator";
 import NavigationBar from "./components/NavigationBar";
 
 const queryClient = new QueryClient();
@@ -24,7 +23,6 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
-              <Route path="/polarization" element={<PolarizationSimulator />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
