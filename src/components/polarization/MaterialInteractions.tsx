@@ -31,11 +31,10 @@ const MaterialInteractions: React.FC<MaterialInteractionsProps> = ({
         <div className="space-y-2">
           <Label htmlFor="material-type">Material</Label>
           <Select 
-            id="material-type"
             value={materialInteraction.material} 
             onValueChange={(value) => onMaterialChange(value as MaterialType)}
           >
-            <SelectTrigger>
+            <SelectTrigger id="material-type">
               <SelectValue placeholder="Select material" />
             </SelectTrigger>
             <SelectContent>

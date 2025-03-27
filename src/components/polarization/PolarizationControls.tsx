@@ -105,7 +105,8 @@ const PolarizationControls: React.FC<PolarizationControlsProps> = ({
                     transform: 'translateX(-50%)'
                   }}
                 ></div>
-                <style jsx>{`
+                <style>
+                  {`
                   @keyframes circle-right {
                     from { transform: translateX(-50%) rotate(0deg) translateY(-24px); }
                     to { transform: translateX(-50%) rotate(360deg) translateY(-24px); }
@@ -114,7 +115,8 @@ const PolarizationControls: React.FC<PolarizationControlsProps> = ({
                     from { transform: translateX(-50%) rotate(0deg) translateY(-24px); }
                     to { transform: translateX(-50%) rotate(-360deg) translateY(-24px); }
                   }
-                `}</style>
+                  `}
+                </style>
               </div>
             </div>
           </TabsContent>
