@@ -1,17 +1,12 @@
-
 import React from 'react';
 import { Beaker, Atom, BookOpen, Users, Star } from 'lucide-react';
-
 const About = () => {
-  return (
-    <div className="min-h-screen bg-[#121212] text-white flex flex-col">
+  return <div className="min-h-screen bg-[#121212] text-white flex flex-col">
       <main className="flex-1 flex flex-col container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto w-full">
           <h1 className="text-3xl md:text-4xl font-bold mb-8 flex items-center justify-center gap-3 text-center">
             <BookOpen className="w-8 h-8 text-neon-green" />
-            <span className="bg-gradient-to-r from-neon-blue via-neon-green to-neon-purple bg-clip-text text-transparent">
-              About Our Periodic Table Project
-            </span>
+            <span className="bg-gradient-to-r from-neon-blue via-neon-green to-neon-purple bg-clip-text text-transparent font-semibold">About Our Quantum Simulation Project</span>
           </h1>
 
           <div className="space-y-8 mb-8">
@@ -20,11 +15,7 @@ const About = () => {
                 <Users className="text-neon-blue" />
                 Our Mission
               </h2>
-              <p className="text-gray-300 leading-relaxed">
-                We developed the Neon Periodic Table as an interactive educational tool to make chemistry more 
-                engaging and accessible. Our goal is to combine accurate scientific information with a visually 
-                appealing interface that draws users in and makes learning about the elements an enjoyable experience.
-              </p>
+              <p className="text-gray-300 leading-relaxed">We developed this project as an interactive educational tool to make quantum physics more engaging and accessible. Our goal is to combine accurate scientific information with a visually appealing interface that draws users in and makes learning about the quantum mechanics an enjoyable experience.</p>
             </section>
 
             <section className="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800 shadow-neon-green">
@@ -33,11 +24,11 @@ const About = () => {
                 Project Features
               </h2>
               <ul className="text-gray-300 space-y-2 list-disc pl-5">
-                <li>Interactive periodic table with glowing neon aesthetics</li>
-                <li>Detailed information about each element's properties</li>
-                <li>Visual representations of atomic structures</li>
-                <li>Element categorization by type with distinct color coding</li>
-                <li>Responsive design that works on various devices</li>
+                <li>Visualize Electron Spin Precession: Simulate how an electron's spin axis rotates due to Thomas Precession in relativistic motion.</li>
+                <li>Jitter Motion (Zitterbewegung) Path Tracking: Display real-time oscillatory motion of an electron with adjustable mass and speed parameters.</li>
+                <li>Dynamic Spin-Orbit Coupling Effect: Demonstrate how spin interacts with orbital motion, leading to relativistic corrections in atomic structures.</li>
+                <li>3D Helical Motion Simulation: Enable a 3D view of jitter motion to illustrate the combined effects of drift and rapid oscillations.</li>
+                <li>Real-Time Equation Updates: Show dynamic mathematical representations of Thomas Precession & Zitterbewegung as users tweak simulation settings.</li>
               </ul>
             </section>
 
@@ -65,8 +56,6 @@ const About = () => {
       <footer className="py-3 text-center text-gray-500 text-xs">
         <p>© {new Date().getFullYear()} Neon Periodic Table | Interactive Chemistry Reference</p>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default About;
