@@ -1,126 +1,21 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
 import { Beaker } from 'lucide-react';
+import { EnergyMode } from '@/components/zitterbewegung/ParticleReferenceData';
+import ZitterbewegungCanvas from '@/components/zitterbewegung/ZitterbewegungCanvas';
+import SimulationControls from '@/components/zitterbewegung/SimulationControls';
+import EquationDisplay from '@/components/zitterbewegung/EquationDisplay';
+import HistoricalContext from '@/components/zitterbewegung/HistoricalContext';
 
 const ZitterbewegungSimulation: React.FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Simulation state
   const [mass, setMass] = useState<number>(50);
   const [speed, setSpeed] = useState<number>(50);
   const [amplitude, setAmplitude] = useState<number>(50);
+  const [is3DMode, setIs3DMode] = useState<boolean>(false);
+  const [energyMode, setEnergyMode] = useState<EnergyMode>(EnergyMode.POSITIVE);
   
-  // Animation state
-  const animationRef = useRef<number | null>(null);
-  const particleRef = useRef({
-    x: 0,
-    y: 0,
-    baseX: 0,
-    time: 0,
-    trail: Array(50).fill({ x: 0, y: 0 }),
-  });
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Set canvas dimensions
-    const resizeCanvas = () => {
-      const parent = canvas.parentElement;
-      if (parent) {
-        canvas.width = parent.clientWidth;
-        canvas.height = 400;
-      }
-    };
-
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    // Initialize particle position
-    particleRef.current.baseX = canvas.width / 2;
-    particleRef.current.x = canvas.width / 2;
-    particleRef.current.y = canvas.height / 2;
-
-    // Animation function
-    const renderFrame = () => {
-      if (!canvas || !ctx) return;
-
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Get current parameters
-      const normalizedMass = mass / 100; // Convert to 0-1 range
-      const normalizedSpeed = speed / 50; // Convert to 0-2 range
-      const normalizedAmplitude = (amplitude / 100) * 60; // Max amplitude of 60px
-
-      // Update particle position based on Zitterbewegung physics (simplified for visualization)
-      const particle = particleRef.current;
-      particle.time += 0.05 * normalizedSpeed;
-      
-      // Calculate the new position with jitter motion
-      const frequency = (1 - normalizedMass * 0.5) * 0.4; // Lower mass means higher frequency
-      const newX = particle.baseX + Math.sin(particle.time) * 50; // Slow drift
-      const jitterX = Math.sin(particle.time / frequency) * normalizedAmplitude;
-      const jitterY = Math.cos(particle.time / frequency) * normalizedAmplitude;
-      
-      particle.x = newX + jitterX;
-      particle.y = canvas.height / 2 + jitterY;
-
-      // Update trail
-      particle.trail.unshift({ x: particle.x, y: particle.y });
-      particle.trail.pop();
-
-      // Draw trail
-      ctx.beginPath();
-      ctx.moveTo(particle.trail[0].x, particle.trail[0].y);
-      for (let i = 1; i < particle.trail.length; i++) {
-        ctx.lineTo(particle.trail[i].x, particle.trail[i].y);
-      }
-      ctx.strokeStyle = '#00DDFF';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Draw particle
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, 8, 0, Math.PI * 2);
-      ctx.fillStyle = '#FF00AA';
-      ctx.fill();
-      ctx.strokeStyle = '#00DDFF';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Draw glow effect
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, 12, 0, Math.PI * 2);
-      const gradient = ctx.createRadialGradient(
-        particle.x, particle.y, 8,
-        particle.x, particle.y, 16
-      );
-      gradient.addColorStop(0, 'rgba(255, 0, 170, 0.8)');
-      gradient.addColorStop(1, 'rgba(255, 0, 170, 0)');
-      ctx.fillStyle = gradient;
-      ctx.fill();
-
-      // Continue animation
-      animationRef.current = requestAnimationFrame(renderFrame);
-    };
-
-    // Start animation
-    animationRef.current = requestAnimationFrame(renderFrame);
-
-    // Cleanup
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-      window.removeEventListener('resize', resizeCanvas);
-    };
-  }, [mass, speed, amplitude]);
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-center items-center mb-8">
@@ -157,66 +52,44 @@ const ZitterbewegungSimulation: React.FC = () => {
             <CardHeader>
               <CardTitle className="text-white">Simulation</CardTitle>
               <CardDescription>
-                Electron jitter motion visualization
+                {is3DMode ? '3D helical visualization' : 'Electron jitter motion visualization'}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-6 rounded-md border border-gray-800 bg-black overflow-hidden">
-                <canvas ref={canvasRef} className="w-full" style={{ height: '400px' }}></canvas>
+                <ZitterbewegungCanvas 
+                  mass={mass}
+                  speed={speed}
+                  amplitude={amplitude}
+                  is3DMode={is3DMode}
+                  energyMode={energyMode}
+                />
               </div>
 
-              <div className="grid gap-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label htmlFor="mass" className="text-gray-300">Particle Mass</Label>
-                    <span className="text-gray-400">{mass}%</span>
-                  </div>
-                  <Slider
-                    id="mass"
-                    min={10}
-                    max={100}
-                    step={1}
-                    value={[mass]} 
-                    onValueChange={(value) => setMass(value[0])}
-                    className="[&>.bg-primary]:bg-neon-blue"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label htmlFor="speed" className="text-gray-300">Simulation Speed</Label>
-                    <span className="text-gray-400">{speed}%</span>
-                  </div>
-                  <Slider
-                    id="speed"
-                    min={10}
-                    max={100}
-                    step={1}
-                    value={[speed]}
-                    onValueChange={(value) => setSpeed(value[0])}
-                    className="[&>.bg-primary]:bg-neon-purple"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label htmlFor="amplitude" className="text-gray-300">Oscillation Amplitude</Label>
-                    <span className="text-gray-400">{amplitude}%</span>
-                  </div>
-                  <Slider
-                    id="amplitude"
-                    min={10}
-                    max={100}
-                    step={1}
-                    value={[amplitude]}
-                    onValueChange={(value) => setAmplitude(value[0])}
-                    className="[&>.bg-primary]:bg-neon-pink"
-                  />
-                </div>
-              </div>
+              <SimulationControls 
+                mass={mass}
+                setMass={setMass}
+                speed={speed}
+                setSpeed={setSpeed}
+                amplitude={amplitude}
+                setAmplitude={setAmplitude}
+                is3DMode={is3DMode}
+                setIs3DMode={setIs3DMode}
+                energyMode={energyMode}
+                setEnergyMode={setEnergyMode}
+              />
             </CardContent>
           </Card>
         </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <EquationDisplay 
+          mass={mass}
+          amplitude={amplitude}
+          frequency={mass * speed / 50}
+        />
+        <HistoricalContext />
       </div>
     </div>
   );
