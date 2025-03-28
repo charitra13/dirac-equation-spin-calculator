@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import NavigationBar from "./components/NavigationBar";
+import ZitterbewegungSimulation from "./pages/ZitterbewegungSimulation";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
+              <Route path="/zitterbewegung" element={<ZitterbewegungSimulation />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
