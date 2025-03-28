@@ -1,6 +1,18 @@
+
 import React from 'react';
-import { Beaker, Atom, BookOpen, Users, Star } from 'lucide-react';
+import { Beaker, Atom, BookOpen, Users, Star, User } from 'lucide-react';
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
+
 const About = () => {
+  const teamMembers = [
+    { name: "Mahir Abbas", initials: "MA" },
+    { name: "Charitra Jain", initials: "CJ" },
+    { name: "Saksham Dwivedi", initials: "SD" },
+    { name: "Ankit Sharma", initials: "AS" },
+    { name: "Ashvi Shah", initials: "AS" },
+  ];
+
   return <div className="min-h-screen bg-[#121212] text-white flex flex-col">
       <main className="flex-1 flex flex-col container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto w-full">
@@ -42,6 +54,27 @@ const About = () => {
                 visualizations. We've designed the interface with a focus on performance and accessibility, ensuring 
                 that the periodic table is not just beautiful but also functional as an educational resource.
               </p>
+            </section>
+            
+            <section className="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800 shadow-neon-pink">
+              <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+                <User className="text-neon-pink" />
+                Our Team
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-4">
+                {teamMembers.map((member, index) => (
+                  <Card key={index} className="bg-[#252525] border-gray-700 hover:shadow-neon-pink transition-shadow duration-300">
+                    <CardContent className="p-4 flex flex-col items-center">
+                      <Avatar className="h-16 w-16 mb-3 mt-2 bg-[#333] text-white border-2 border-neon-pink">
+                        <AvatarFallback className="text-lg bg-gradient-to-br from-neon-purple to-neon-pink text-white">
+                          {member.initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <h3 className="text-white text-center font-medium">{member.name}</h3>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </section>
           </div>
 
