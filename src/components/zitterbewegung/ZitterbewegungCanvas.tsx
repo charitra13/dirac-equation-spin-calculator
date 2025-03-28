@@ -357,8 +357,12 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
         }
         
         // Update trail geometry
-        const positions = trailGeometry.attributes.position.array as Float32Array;
-        const colors = trailGeometry.attributes.color.array as Float32Array;
+        const positionAttribute = trailGeometry.getAttribute('position');
+        const colorAttribute = trailGeometry.getAttribute('color');
+        
+        // Type assertion to safely access the array property
+        const positions = (positionAttribute as THREE.BufferAttribute).array as Float32Array;
+        const colors = (colorAttribute as THREE.BufferAttribute).array as Float32Array;
         
         for (let i = 0; i < trailPoints.length; i++) {
           const point = trailPoints[i];
@@ -398,8 +402,8 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
         }
         
         // Tell three.js the attributes need updating
-        trailGeometry.attributes.position.needsUpdate = true;
-        trailGeometry.attributes.color.needsUpdate = true;
+        positionAttribute.needsUpdate = true;
+        colorAttribute.needsUpdate = true;
         
         // Render scene
         rendererRef.current.render(scene, camera);
