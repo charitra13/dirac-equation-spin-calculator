@@ -9,33 +9,29 @@ import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import NavigationBar from "./components/NavigationBar";
 import ZitterbewegungSimulation from "./pages/ZitterbewegungSimulation";
-import ThomasPrecessionSimulation from "./pages/ThomasPrecessionSimulation";
 
 const queryClient = new QueryClient();
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <div className="min-h-screen flex flex-col">
-            <NavigationBar />
-            <div className="flex-1">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/zitterbewegung" element={<ZitterbewegungSimulation />} />
-                <Route path="/thomas-precession" element={<ThomasPrecessionSimulation />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </div>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <div className="min-h-screen flex flex-col">
+          <NavigationBar />
+          <div className="flex-1">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/zitterbewegung" element={<ZitterbewegungSimulation />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </div>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-}
+        </div>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

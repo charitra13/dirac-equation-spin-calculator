@@ -1,7 +1,5 @@
-
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import SEO from '@/components/SEO';
 
 const NotFound = () => {
   const location = useLocation();
@@ -15,13 +13,6 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <SEO 
-        title="Page Not Found | Atomic Simulations"
-        description="The page you were looking for could not be found. Please check the URL or navigate back to the home page."
-        keywords="404, not found, error page, atomic simulations"
-        canonicalPath={location.pathname}
-        ogImage="/images/og-default.png"
-      />
       <div className="text-center">
         <h1 className="text-4xl font-bold mb-4">404</h1>
         <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
