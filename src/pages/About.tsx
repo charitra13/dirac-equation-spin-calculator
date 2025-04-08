@@ -3,6 +3,7 @@ import React from 'react';
 import { Beaker, Atom, BookOpen, Users, Star, User } from 'lucide-react';
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import SEO from '@/components/SEO';
 
 const About = () => {
   const teamMembers = [
@@ -14,6 +15,13 @@ const About = () => {
   ];
 
   return <div className="min-h-screen bg-[#121212] text-white flex flex-col">
+      <SEO 
+        title="About | Atomic Simulations"
+        description="Learn about our team of quantum physics enthusiasts building interactive educational tools to make complex concepts accessible and engaging."
+        keywords="quantum physics education, interactive learning, Thomas precession, Zitterbewegung, physics team"
+        canonicalPath="/about"
+        ogImage="/images/og-default.png"
+      />
       <main className="flex-1 flex flex-col container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto w-full">
           <h1 className="text-3xl md:text-4xl font-bold mb-8 flex items-center justify-center gap-3 text-center">
@@ -87,7 +95,7 @@ const About = () => {
         </div>
       </main>
       <footer className="py-3 text-center text-gray-500 text-xs">
-        <p>© {new Date().getFullYear()} Neon Periodic Table | Interactive Chemistry Reference</p>
+        <p>© {new Date().getFullYear()} Atomic Simulations | Interactive Quantum Physics Reference</p>
       </footer>
     </div>;
 };

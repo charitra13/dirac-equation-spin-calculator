@@ -6,6 +6,7 @@ import ThomasPrecessionCanvas from '@/components/thomasPrecession/ThomasPrecessi
 import PrecessionControls from '@/components/thomasPrecession/PrecessionControls';
 import PrecessionEquationDisplay from '@/components/thomasPrecession/PrecessionEquationDisplay';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import SEO from '@/components/SEO';
 
 const ThomasPrecessionSimulation: React.FC = () => {
   // Simulation state
@@ -20,6 +21,13 @@ const ThomasPrecessionSimulation: React.FC = () => {
   
   return (
     <div className="container mx-auto px-4 py-8">
+      <SEO 
+        title="Thomas Precession Simulation | Atomic Simulations"
+        description="Visualize how relativistic motion leads to spin precession with Thomas Precession simulations. Explore the relationship between velocity and precession frequency."
+        keywords="Thomas precession, spin-orbit coupling, relativistic correction, electron spin, quantum visualization"
+        canonicalPath="/thomas-precession"
+        ogImage="/images/preview-thomas-precession.png"
+      />
       <div className="flex justify-center items-center mb-8">
         <h1 className="text-3xl bg-gradient-to-r from-neon-blue via-neon-purple to-neon-pink bg-clip-text text-transparent md:text-3xl font-bold">
           Thomas Precession Simulation

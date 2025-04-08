@@ -7,6 +7,7 @@ import ZitterbewegungCanvas from '@/components/zitterbewegung/ZitterbewegungCanv
 import SimulationControls from '@/components/zitterbewegung/SimulationControls';
 import EquationDisplay from '@/components/zitterbewegung/EquationDisplay';
 import HistoricalContext from '@/components/zitterbewegung/HistoricalContext';
+import SEO from '@/components/SEO';
 
 const ZitterbewegungSimulation: React.FC = () => {
   // Simulation state
@@ -18,6 +19,13 @@ const ZitterbewegungSimulation: React.FC = () => {
   
   return (
     <div className="container mx-auto px-4 py-8">
+      <SEO 
+        title="Zitterbewegung Simulation | Atomic Simulations"
+        description="Experience jitter motion—relativistic electron oscillations—as predicted by the Dirac Equation. Interactive simulation with adjustable parameters."
+        keywords="Zitterbewegung, trembling motion, Dirac equation, relativistic quantum mechanics, electron oscillation"
+        canonicalPath="/zitterbewegung"
+        ogImage="/images/preview-zitterbewegung.png"
+      />
       <div className="flex justify-center items-center mb-8">
         <Beaker className="w-8 h-8 mr-3 text-neon-purple animate-pulse-glow" />
         <h1 className="text-3xl bg-gradient-to-r from-neon-blue via-neon-purple to-neon-pink bg-clip-text text-transparent md:text-3xl font-bold">
