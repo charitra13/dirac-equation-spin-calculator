@@ -25,6 +25,7 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const frameIdRef = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const particleRef = useRef({
     x: 0,
@@ -35,31 +36,65 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
     trail: Array(50).fill({ x: 0, y: 0, z: 0 }),
   });
 
+  // Cleanup function to properly dispose of Three.js resources
+  const cleanupThreeJS = () => {
+    // Cancel any active animation frame
+    if (frameIdRef.current !== null) {
+      cancelAnimationFrame(frameIdRef.current);
+      frameIdRef.current = null;
+    }
+
+    // Dispose of orbit controls
+    if (controlsRef.current) {
+      controlsRef.current.dispose();
+      controlsRef.current = null;
+    }
+
+    // Dispose of renderer
+    if (rendererRef.current) {
+      // Remove renderer DOM element if it exists
+      if (rendererRef.current.domElement.parentElement) {
+        rendererRef.current.domElement.parentElement.removeChild(rendererRef.current.domElement);
+      }
+      rendererRef.current.dispose();
+      rendererRef.current = null;
+    }
+
+    // Dispose of scene objects
+    if (sceneRef.current) {
+      sceneRef.current.traverse((object) => {
+        // Dispose of geometries and materials
+        if (object instanceof THREE.Mesh) {
+          if (object.geometry) {
+            object.geometry.dispose();
+          }
+          if (object.material) {
+            if (Array.isArray(object.material)) {
+              object.material.forEach(material => material.dispose());
+            } else {
+              object.material.dispose();
+            }
+          }
+        }
+      });
+      sceneRef.current = null;
+    }
+
+    // Clear camera reference
+    cameraRef.current = null;
+  };
+
   // Set up 2D canvas for non-3D mode
   useEffect(() => {
     if (!is3DMode) {
+      // Clean up any existing 3D renderer
+      cleanupThreeJS();
+
       const canvas = canvasRef.current;
       if (!canvas) return;
 
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-
-      // Clean up any previous 3D renderer
-      if (rendererRef.current) {
-        if (frameIdRef.current) {
-          cancelAnimationFrame(frameIdRef.current);
-          frameIdRef.current = null;
-        }
-        
-        if (canvas.parentElement && rendererRef.current.domElement !== canvas) {
-          canvas.parentElement.removeChild(rendererRef.current.domElement);
-        }
-        
-        rendererRef.current = null;
-        sceneRef.current = null;
-        cameraRef.current = null;
-        controlsRef.current = null;
-      }
 
       // Set canvas dimensions
       const resizeCanvas = () => {
@@ -73,11 +108,15 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       resizeCanvas();
       window.addEventListener('resize', resizeCanvas);
 
-      // Initialize particle position
-      particleRef.current.baseX = canvas.width / 2;
-      particleRef.current.x = canvas.width / 2;
-      particleRef.current.y = canvas.height / 2;
-      particleRef.current.z = 0;
+      // Reset particle state
+      particleRef.current = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        z: 0,
+        baseX: canvas.width / 2,
+        time: 0,
+        trail: Array(50).fill({ x: canvas.width / 2, y: canvas.height / 2, z: 0 }),
+      };
 
       // Animation function for 2D
       const renderFrame = () => {
@@ -187,14 +226,17 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
   // Set up 3D scene
   useEffect(() => {
     if (is3DMode) {
+      // Clean up any existing resources first
+      cleanupThreeJS();
+
       const canvas = canvasRef.current;
       if (!canvas) return;
+      
+      const container = containerRef.current || canvas.parentElement;
+      if (!container) return;
 
-      // Clean up any previous 2D animation
-      if (frameIdRef.current) {
-        cancelAnimationFrame(frameIdRef.current);
-        frameIdRef.current = null;
-      }
+      // Hide 2D canvas
+      canvas.style.display = 'none';
 
       // Create scene
       const scene = new THREE.Scene();
@@ -204,7 +246,7 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       // Create camera
       const camera = new THREE.PerspectiveCamera(
         75,
-        canvas.parentElement ? canvas.parentElement.clientWidth / 400 : 2,
+        container.clientWidth / 400,
         0.1,
         1000
       );
@@ -212,18 +254,17 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       camera.position.y = 20;
       cameraRef.current = camera;
 
-      // Create renderer if it doesn't exist
-      if (!rendererRef.current) {
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        rendererRef.current = renderer;
-        
-        // Add the renderer's canvas
-        if (canvas.parentElement) {
-          renderer.setSize(canvas.parentElement.clientWidth, 400);
-          canvas.style.display = 'none';
-          canvas.parentElement.appendChild(renderer.domElement);
-        }
-      }
+      // Create renderer
+      const renderer = new THREE.WebGLRenderer({ 
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance'
+      });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(container.clientWidth, 400);
+      renderer.shadowMap.enabled = true;
+      container.appendChild(renderer.domElement);
+      rendererRef.current = renderer;
 
       // Add lights
       const ambientLight = new THREE.AmbientLight(0x404040);
@@ -239,12 +280,10 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       scene.add(gridHelper);
 
       // Add orbit controls
-      if (rendererRef.current) {
-        const controls = new OrbitControls(camera, rendererRef.current.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controlsRef.current = controls;
-      }
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controlsRef.current = controls;
 
       // Create particle geometry
       const particleGeometry = new THREE.SphereGeometry(2, 32, 32);
@@ -417,9 +456,9 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       
       // Handle resize
       const handleResize = () => {
-        if (!canvas.parentElement || !cameraRef.current || !rendererRef.current) return;
+        if (!container || !cameraRef.current || !rendererRef.current) return;
         
-        const width = canvas.parentElement.clientWidth;
+        const width = container.clientWidth;
         const height = 400;
         
         cameraRef.current.aspect = width / height;
@@ -438,13 +477,8 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
         
         window.removeEventListener('resize', handleResize);
         
-        // Remove Three.js canvas if it exists
-        if (rendererRef.current && canvas.parentElement) {
-          const threeCanvas = rendererRef.current.domElement;
-          if (canvas.parentElement.contains(threeCanvas)) {
-            canvas.parentElement.removeChild(threeCanvas);
-          }
-        }
+        // Full cleanup
+        cleanupThreeJS();
         
         // Show the original canvas again
         if (canvas) {
@@ -455,11 +489,13 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
   }, [is3DMode, mass, speed, amplitude, energyMode]);
 
   return (
-    <canvas 
-      ref={canvasRef} 
-      className="w-full rounded-md border border-gray-800 bg-black overflow-hidden"
-      style={{ height: '400px', display: is3DMode ? 'none' : 'block' }}
-    />
+    <div ref={containerRef} className="w-full relative">
+      <canvas 
+        ref={canvasRef} 
+        className="w-full rounded-md border border-gray-800 bg-black overflow-hidden"
+        style={{ height: '400px', display: is3DMode ? 'none' : 'block' }}
+      />
+    </div>
   );
 };
 
