@@ -4,9 +4,12 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { X } from 'lucide-react';
 import AtomicStructure, { ElectronData } from './AtomicStructure';
 import ElectronSpinVisualization from './ElectronSpinVisualization';
+import ThomasPrecessionPanel from './ThomasPrecessionPanel';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface ElementDetailsProps {
   isOpen: boolean;
@@ -29,6 +32,8 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
 
   const [selectedElectron, setSelectedElectron] = useState<ElectronData | null>(null);
   const [magneticField, setMagneticField] = useState<number>(1.0); // Default 1.0 Tesla
+  const [precessionMode, setPrecessionMode] = useState<'larmor' | 'thomas'>('thomas');
+  const [showPrecessionCone, setShowPrecessionCone] = useState<boolean>(true);
 
   // Function to get category label
   const getCategoryLabel = (category: string) => {
@@ -64,8 +69,8 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
     setSelectedElectron(electronData);
   };
 
-  const handleMagneticFieldChange = (value: number[]) => {
-    setMagneticField(value[0]);
+  const handleMagneticFieldChange = (value: number) => {
+    setMagneticField(value);
   };
 
   return (
@@ -100,51 +105,70 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
         </div>
         
         {/* Content - Scrollable area */}
-        <div className="flex-grow overflow-auto">
-          <div className="flex flex-col md:flex-row">
-            {/* Atomic Structure Visualization */}
-            <div className="w-full md:w-1/3 h-[300px] md:h-[400px] border-b md:border-b-0 md:border-r border-gray-800">
-              <div className="p-3 text-sm bg-gray-800/50">
-                <h3 className="font-medium mb-1">Atomic Structure</h3>
-                <p className="text-xs text-gray-400">Click on an electron to select it. Click on the nucleus to pause/resume rotation.</p>
-              </div>
-              <div className="h-[calc(100%-40px)]">
-                <AtomicStructure 
-                  atomicNumber={element.number} 
-                  symbol={element.symbol}
-                  onElectronSelect={handleElectronSelect}
-                />
-              </div>
-            </div>
-            
-            {/* Electron Spin Visualization */}
-            <div className="w-full md:w-1/3 h-[300px] md:h-[400px] border-b md:border-b-0 md:border-r border-gray-800">
-              <div className="p-3 bg-gray-800/50 flex justify-between items-center">
-                <h3 className="font-medium">Electron Spin</h3>
-                <div className="flex items-center space-x-2 w-1/2">
-                  <span className="text-xs text-gray-400">Magnetic Field (T):</span>
-                  <Slider
-                    value={[magneticField]}
-                    min={0.1}
-                    max={10}
-                    step={0.1}
-                    onValueChange={handleMagneticFieldChange}
-                    className="w-32"
+        <ScrollArea className="flex-grow overflow-auto">
+          <div className="flex flex-col lg:flex-row">
+            {/* Left Column: Atomic Structure + Electron Spin */}
+            <div className="w-full lg:w-2/3 p-4">
+              <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                {/* Atomic Structure Visualization */}
+                <div className="w-full md:w-1/2 h-[300px] md:h-[400px] bg-gray-900 border border-gray-800 rounded-md overflow-hidden">
+                  <div className="p-3 text-sm bg-gray-800/50">
+                    <h3 className="font-medium mb-1">Atomic Structure</h3>
+                    <p className="text-xs text-gray-400">Click on an electron to select it. Click on the nucleus to pause/resume rotation.</p>
+                  </div>
+                  <div className="h-[calc(100%-40px)]">
+                    <AtomicStructure 
+                      atomicNumber={element.number} 
+                      symbol={element.symbol}
+                      onElectronSelect={handleElectronSelect}
+                    />
+                  </div>
+                </div>
+                
+                {/* Electron Spin Visualization */}
+                <div className="w-full md:w-1/2 h-[300px] md:h-[400px] bg-gray-900 border border-gray-800 rounded-md overflow-hidden">
+                  <ElectronSpinVisualization 
+                    electronData={selectedElectron}
+                    atomicNumber={element.number}
+                    magneticField={magneticField}
+                    precessionMode={precessionMode}
+                    showPrecessionCone={showPrecessionCone}
                   />
-                  <span className="text-xs">{magneticField.toFixed(1)}</span>
                 </div>
               </div>
-              <div className="h-[calc(100%-40px)]">
-                <ElectronSpinVisualization 
-                  electronData={selectedElectron}
-                  atomicNumber={element.number}
-                  magneticField={magneticField}
-                />
-              </div>
+              
+              {/* Thomas Precession Panel - Only show if an electron is selected */}
+              {selectedElectron && (
+                <div className="mt-4">
+                  <ThomasPrecessionPanel 
+                    atomicNumber={element.number}
+                    element={{name: element.name, symbol: element.symbol}}
+                    quantumNumbers={selectedElectron.quantumNumbers}
+                    magneticField={magneticField}
+                    onMagneticFieldChange={handleMagneticFieldChange}
+                    precessionMode={precessionMode}
+                    onPrecessionModeChange={setPrecessionMode}
+                  />
+                </div>
+              )}
+              
+              {/* Visualization Options */}
+              {selectedElectron && (
+                <div className="mt-4 flex flex-wrap items-center gap-6 p-3 bg-gray-900 border border-gray-800 rounded-md">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="show-precession-cone"
+                      checked={showPrecessionCone}
+                      onCheckedChange={setShowPrecessionCone}
+                    />
+                    <Label htmlFor="show-precession-cone">Show Precession Cone</Label>
+                  </div>
+                </div>
+              )}
             </div>
             
-            {/* Element Information */}
-            <div className="w-full md:w-1/3 p-4 sm:p-6">
+            {/* Right Column: Element Information */}
+            <div className="w-full lg:w-1/3 p-4 border-t lg:border-t-0 lg:border-l border-gray-800">
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-medium text-gray-300 mb-2">Description</h3>
@@ -180,10 +204,23 @@ const ElementDetails = ({ isOpen, onClose, element }: ElementDetailsProps) => {
                     where g≈2.002 is the g-factor and γ is the relativistic Lorentz factor.
                   </p>
                 </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium text-gray-300 mb-2">Thomas Precession</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">
+                    Thomas precession is a relativistic correction to the angular velocity of a spinning particle.
+                    It becomes increasingly important for elements with higher atomic numbers, where electrons
+                    move at significant fractions of the speed of light.
+                  </p>
+                  <p className="text-sm text-gray-400 mt-2 leading-relaxed">
+                    The Thomas precession frequency ω<sub>T</sub> = ω<sub>L</sub>(1 - 1/γ), where ω<sub>L</sub> is the
+                    Larmor frequency and γ is the Lorentz factor that increases with atomic number.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

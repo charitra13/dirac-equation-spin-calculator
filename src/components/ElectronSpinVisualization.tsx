@@ -1,46 +1,37 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ElectronData } from './AtomicStructure';
+import { 
+  calculateSpinPrecessionFrequency,
+  formatScientificNotation
+} from '@/utils/thomasPrecessionCalculations';
 
 interface ElectronSpinVisualizationProps {
   electronData: ElectronData | null;
   atomicNumber: number;
   magneticField: number; // in Tesla
+  precessionMode: 'larmor' | 'thomas';
+  showPrecessionCone?: boolean;
 }
 
 const ElectronSpinVisualization: React.FC<ElectronSpinVisualizationProps> = ({
   electronData,
   atomicNumber,
-  magneticField
+  magneticField,
+  precessionMode,
+  showPrecessionCone = true
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isPaused, setIsPaused] = useState(false);
   
-  // Constants for calculations
-  const ELECTRON_CHARGE = 1.602176634e-19; // in Coulombs
-  const ELECTRON_MASS = 9.1093837015e-31; // in kg
-  const G_FACTOR = 2.00231930436; // electron g-factor
-  const LIGHT_SPEED = 299792458; // in m/s
-  
-  // Calculate spin speed using the Dirac equation
+  // Calculate spin speed using the enhanced calculation function
   const calculateSpinSpeed = (atomicNumber: number, magneticField: number, quantumNumbers: any) => {
-    // Calculate Lorentz factor for relativistic corrections
-    // For simplicity, we're using Z as a proxy for velocity relative to c
-    const velocity = Math.min(atomicNumber / 137, 0.9); // 137 is fine structure constant denominator
-    const gamma = 1 / Math.sqrt(1 - velocity * velocity);
-    
-    // Calculate spin angular frequency
-    // ω_s = (e*B/m_e) * (g/2 - 1 + 1/γ)
-    const spinSpeed = (ELECTRON_CHARGE * magneticField / ELECTRON_MASS) * 
-                      ((G_FACTOR / 2) - 1 + (1 / gamma));
-    
-    // Apply quantum number adjustments
-    // Spin projection factor based on s quantum number
-    const spinFactor = quantumNumbers.s > 0 ? 1 : -1;
-    
-    // Orbital contribution based on l and n
-    const orbitalFactor = 1 + (quantumNumbers.l / quantumNumbers.n);
-    
-    return spinSpeed * spinFactor * orbitalFactor;
+    return calculateSpinPrecessionFrequency(
+      atomicNumber,
+      magneticField,
+      quantumNumbers,
+      precessionMode === 'thomas'
+    );
   };
   
   useEffect(() => {
@@ -64,10 +55,9 @@ const ElectronSpinVisualization: React.FC<ElectronSpinVisualizationProps> = ({
     // Center coordinates
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = Math.min(centerX, centerY) * 0.8;
     
     // Bloch sphere parameters
-    const blochSphereRadius = radius * 0.6;
+    const blochSphereRadius = Math.min(centerX, centerY) * 0.7;
     
     // Animation variables
     let angle = 0;
@@ -133,8 +123,10 @@ const ElectronSpinVisualization: React.FC<ElectronSpinVisualizationProps> = ({
       const precessionAngle = angle * Math.sign(spinSpeed);
       const precessionSpeed = Math.abs(spinSpeed) / 1e12; // Scale down for visualization
       
-      // Update angle based on time and speed
-      angle += 0.05 * precessionSpeed;
+      // Update angle based on time and speed, but only if not paused
+      if (!isPaused) {
+        angle += 0.05 * precessionSpeed;
+      }
       
       const spinX = Math.sin(Math.PI * 0.4) * Math.cos(precessionAngle);
       const spinY = Math.sin(Math.PI * 0.4) * Math.sin(precessionAngle);
@@ -165,16 +157,18 @@ const ElectronSpinVisualization: React.FC<ElectronSpinVisualizationProps> = ({
       ctx.fillStyle = '#ff0000';
       ctx.fill();
       
-      // Draw precession circle
-      ctx.beginPath();
-      ctx.arc(
-        centerX, 
-        centerY - normalizedZ * blochSphereRadius, 
-        Math.sqrt(normalizedX * normalizedX + normalizedY * normalizedY) * blochSphereRadius,
-        0, Math.PI * 2
-      );
-      ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
-      ctx.stroke();
+      // Draw precession circle if enabled
+      if (showPrecessionCone) {
+        ctx.beginPath();
+        ctx.arc(
+          centerX, 
+          centerY - normalizedZ * blochSphereRadius, 
+          Math.sqrt(normalizedX * normalizedX + normalizedY * normalizedY) * blochSphereRadius,
+          0, Math.PI * 2
+        );
+        ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+        ctx.stroke();
+      }
       
       // Continue animation
       animationFrameId = requestAnimationFrame(draw);
@@ -187,7 +181,7 @@ const ElectronSpinVisualization: React.FC<ElectronSpinVisualizationProps> = ({
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [electronData, atomicNumber, magneticField]);
+  }, [electronData, atomicNumber, magneticField, precessionMode, showPrecessionCone, isPaused]);
   
   if (!electronData) {
     return (
@@ -209,7 +203,15 @@ const ElectronSpinVisualization: React.FC<ElectronSpinVisualizationProps> = ({
   return (
     <div className="electron-spin-container h-full flex flex-col">
       <div className="electron-spin-info bg-gray-800 p-3 rounded-t-md">
-        <h3 className="text-lg font-medium text-gray-300 mb-2">Electron Spin Properties</h3>
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="text-lg font-medium text-gray-300">Electron Spin Properties</h3>
+          <button 
+            onClick={() => setIsPaused(!isPaused)}
+            className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs"
+          >
+            {isPaused ? "Resume" : "Pause"}
+          </button>
+        </div>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div>
             <p className="text-gray-400">Shell: {electronData.shellNumber + 1}</p>
@@ -221,8 +223,9 @@ const ElectronSpinVisualization: React.FC<ElectronSpinVisualizationProps> = ({
           </div>
           <div>
             <p className="text-gray-400">Magnetic Field: {magneticField.toFixed(2)} T</p>
-            <p className="text-gray-400">Spin Speed: {(Math.abs(spinSpeed) / 1e11).toFixed(6)} × 10¹¹ rad/s</p>
+            <p className="text-gray-400">Spin Speed: {formatScientificNotation(spinSpeed)}</p>
             <p className="text-gray-400">Spin Direction: {spinSpeed > 0 ? "Clockwise" : "Counterclockwise"}</p>
+            <p className="text-gray-400">Mode: {precessionMode === 'thomas' ? "Thomas-Corrected" : "Larmor Only"}</p>
           </div>
         </div>
       </div>
