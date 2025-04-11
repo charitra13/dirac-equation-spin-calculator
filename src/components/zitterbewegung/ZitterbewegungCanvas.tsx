@@ -39,23 +39,18 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
     trail: Array(50).fill({ x: 0, y: 0, z: 0 }),
   });
 
-  // Cleanup function to properly dispose of Three.js resources
   const cleanupThreeJS = () => {
-    // Cancel any active animation frame
     if (frameIdRef.current !== null) {
       cancelAnimationFrame(frameIdRef.current);
       frameIdRef.current = null;
     }
 
-    // Dispose of orbit controls
     if (controlsRef.current) {
       controlsRef.current.dispose();
       controlsRef.current = null;
     }
 
-    // Dispose of renderer
     if (rendererRef.current) {
-      // Remove renderer DOM element if it exists
       if (rendererRef.current.domElement.parentElement) {
         rendererRef.current.domElement.parentElement.removeChild(rendererRef.current.domElement);
       }
@@ -63,10 +58,8 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       rendererRef.current = null;
     }
 
-    // Dispose of scene objects
     if (sceneRef.current) {
       sceneRef.current.traverse((object) => {
-        // Dispose of geometries and materials
         if (object instanceof THREE.Mesh) {
           if (object.geometry) {
             object.geometry.dispose();
@@ -83,15 +76,12 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       sceneRef.current = null;
     }
 
-    // Clear camera reference
     cameraRef.current = null;
     particleRef.current = null;
   };
 
-  // Set up 2D canvas for non-3D mode
   useEffect(() => {
     if (!is3DMode) {
-      // Clean up any existing 3D renderer
       cleanupThreeJS();
       setShowResetButton(false);
 
@@ -101,7 +91,6 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      // Set canvas dimensions
       const resizeCanvas = () => {
         const parent = canvas.parentElement;
         if (parent) {
@@ -113,7 +102,6 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       resizeCanvas();
       window.addEventListener('resize', resizeCanvas);
 
-      // Reset particle state
       particleDataRef.current = {
         x: canvas.width / 2,
         y: canvas.height / 2,
@@ -123,74 +111,62 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
         trail: Array(50).fill({ x: canvas.width / 2, y: canvas.height / 2, z: 0 }),
       };
 
-      // Animation function for 2D
       const renderFrame = () => {
         if (!canvas || !ctx) return;
 
-        // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Get current parameters
-        const normalizedMass = mass / 100; // Convert to 0-1 range
-        const normalizedSpeed = speed / 50; // Convert to 0-2 range
-        const normalizedAmplitude = (amplitude / 100) * 60; // Max amplitude of 60px
+        const normalizedMass = mass / 100;
+        const normalizedSpeed = speed / 50;
+        const normalizedAmplitude = (amplitude / 100) * 60;
 
-        // Update particle position based on Zitterbewegung physics (simplified for visualization)
         const particle = particleDataRef.current;
         particle.time += 0.05 * normalizedSpeed;
-        
-        // Calculate the new position with jitter motion
-        const frequency = (1 - normalizedMass * 0.5) * 0.4; // Lower mass means higher frequency
+
+        const frequency = (1 - normalizedMass * 0.5) * 0.4;
         const driftSpeed = normalizedSpeed * (energyMode === EnergyMode.NEGATIVE ? -0.5 : 1);
-        const newX = particle.baseX + Math.sin(particle.time) * 50 * driftSpeed; // Slow drift
-        
-        // Adjust oscillation strength based on energy mode
+        const newX = particle.baseX + Math.sin(particle.time) * 50 * driftSpeed;
+
         let oscillationScale = normalizedAmplitude;
         if (energyMode === EnergyMode.NEGATIVE) {
           oscillationScale *= 1.5;
         } else if (energyMode === EnergyMode.SUPERPOSITION) {
           oscillationScale *= 1 + Math.sin(particle.time * 0.1) * 0.5;
         }
-        
+
         const jitterX = Math.sin(particle.time / frequency) * oscillationScale;
         const jitterY = Math.cos(particle.time / frequency) * oscillationScale;
-        
+
         particle.x = newX + jitterX;
         particle.y = canvas.height / 2 + jitterY;
 
-        // Update trail
         particle.trail.unshift({ x: particle.x, y: particle.y, z: 0 });
         particle.trail.pop();
 
-        // Draw trail with color based on speed
         ctx.beginPath();
         ctx.moveTo(particle.trail[0].x, particle.trail[0].y);
-        
+
         for (let i = 1; i < particle.trail.length; i++) {
           ctx.lineTo(particle.trail[i].x, particle.trail[i].y);
-          
-          // Calculate speed between points for color
+
           const dx = particle.trail[i].x - particle.trail[i-1].x;
           const dy = particle.trail[i].y - particle.trail[i-1].y;
           const speed = Math.sqrt(dx*dx + dy*dy);
-          
-          // Create gradient colors based on speed
+
           const r = Math.min(255, speed * 5 + 100);
           const g = Math.max(0, 100 - speed * 2);
           const b = Math.max(0, 255 - speed * 5);
-          
+
           ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`;
           ctx.lineWidth = 2;
           ctx.stroke();
-          
-          // Start a new path for the next segment with a different color
+
           if (i < particle.trail.length - 1) {
             ctx.beginPath();
             ctx.moveTo(particle.trail[i].x, particle.trail[i].y);
           }
         }
 
-        // Draw particle
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, 8, 0, Math.PI * 2);
         ctx.fillStyle = '#FF00AA';
@@ -199,7 +175,6 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Draw glow effect
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, 12, 0, Math.PI * 2);
         const gradient = ctx.createRadialGradient(
@@ -211,14 +186,11 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
         ctx.fillStyle = gradient;
         ctx.fill();
 
-        // Continue animation
         frameIdRef.current = requestAnimationFrame(renderFrame);
       };
 
-      // Start animation
       frameIdRef.current = requestAnimationFrame(renderFrame);
 
-      // Cleanup
       return () => {
         if (frameIdRef.current) {
           cancelAnimationFrame(frameIdRef.current);
@@ -228,10 +200,8 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
     }
   }, [is3DMode, mass, speed, amplitude, energyMode]);
 
-  // Set up 3D scene
   useEffect(() => {
     if (is3DMode) {
-      // Clean up any existing resources first
       cleanupThreeJS();
 
       const canvas = canvasRef.current;
@@ -240,26 +210,22 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       const container = containerRef.current || canvas.parentElement;
       if (!container) return;
 
-      // Hide 2D canvas
       canvas.style.display = 'none';
 
-      // Create scene
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x000000);
       sceneRef.current = scene;
 
-      // Create camera
       const camera = new THREE.PerspectiveCamera(
         75,
         container.clientWidth / 400,
         0.1,
-        5000 // Increased far plane for infinite view
+        5000
       );
       camera.position.z = 100;
       camera.position.y = 20;
       cameraRef.current = camera;
 
-      // Create renderer
       const renderer = new THREE.WebGLRenderer({ 
         antialias: true,
         alpha: true,
@@ -271,7 +237,6 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       container.appendChild(renderer.domElement);
       rendererRef.current = renderer;
 
-      // Add lights
       const ambientLight = new THREE.AmbientLight(0x404040);
       scene.add(ambientLight);
       
@@ -279,17 +244,25 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       directionalLight.position.set(1, 1, 1);
       scene.add(directionalLight);
 
-      // Create infinite grid with lower opacity
-      const gridSize = 10000; // Much larger grid size for effectively infinite grid
+      const gridSize = 10000;
       const gridDivisions = 1000;
       const gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x008888, 0x555555);
       gridHelper.position.y = -20;
-      // Reduce grid opacity by 50%
-      gridHelper.material.opacity = 0.25;
-      gridHelper.material.transparent = true;
+
+      if (gridHelper.material instanceof THREE.Material) {
+        gridHelper.material.opacity = 0.25;
+        gridHelper.material.transparent = true;
+      } else if (Array.isArray(gridHelper.material)) {
+        gridHelper.material.forEach(mat => {
+          if (mat instanceof THREE.Material) {
+            mat.opacity = 0.25;
+            mat.transparent = true;
+          }
+        });
+      }
+
       scene.add(gridHelper);
       
-      // Add central Z axis line to help with orientation
       const zAxisGeometry = new THREE.BufferGeometry();
       const zAxisPoints = [];
       zAxisPoints.push(new THREE.Vector3(0, -20, -gridSize/2));
@@ -306,24 +279,20 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       const zAxisLine = new THREE.Line(zAxisGeometry, zAxisMaterial);
       scene.add(zAxisLine);
       
-      // Add orbit controls with significantly reduced sensitivity
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
-      controls.dampingFactor = 0.15; // Increased damping for smoother motion
-      controls.rotateSpeed = 0.2; // Reduced rotation sensitivity
-      controls.zoomSpeed = 0.5; // Reduced zoom sensitivity
-      controls.panSpeed = 0.3; // Reduced pan sensitivity
-      controls.minDistance = 5; // Allow closer zoom
-      controls.maxDistance = 500; // Prevent zooming out too far
-      // Limit vertical rotation to prevent camera flipping
-      controls.minPolarAngle = Math.PI * 0.1; // Limit looking straight down
-      controls.maxPolarAngle = Math.PI * 0.8; // Limit looking straight up
+      controls.dampingFactor = 0.15;
+      controls.rotateSpeed = 0.2;
+      controls.zoomSpeed = 0.5;
+      controls.panSpeed = 0.3;
+      controls.minDistance = 5;
+      controls.maxDistance = 500;
+      controls.minPolarAngle = Math.PI * 0.1;
+      controls.maxPolarAngle = Math.PI * 0.8;
       controlsRef.current = controls;
       
-      // Show reset button when in 3D mode
       setShowResetButton(true);
 
-      // Create particle geometry
       const particleGeometry = new THREE.SphereGeometry(2, 32, 32);
       const particleMaterial = new THREE.MeshPhongMaterial({ 
         color: 0xff00aa,
@@ -334,14 +303,12 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       scene.add(particle);
       particleRef.current = particle;
 
-      // Create trail using points - significantly increased number of trail points
-      const trailLength = 1000; // Increased trail length for persistence
+      const trailLength = 1000;
       const trailGeometry = new THREE.BufferGeometry();
-      const trailPositions = new Float32Array(trailLength * 3); // trailLength points * 3 coordinates
+      const trailPositions = new Float32Array(trailLength * 3);
       trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
       
-      // Create trail color attributes
-      const colors = new Float32Array(trailLength * 3); // trailLength points * 3 color values (r,g,b)
+      const colors = new Float32Array(trailLength * 3);
       trailGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
       
       const trailMaterial = new THREE.PointsMaterial({ 
@@ -349,57 +316,47 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
         vertexColors: true,
         blending: THREE.AdditiveBlending,
         transparent: true,
-        depthWrite: false // Prevent depth testing issues with trail
+        depthWrite: false
       });
       
       const trail = new THREE.Points(trailGeometry, trailMaterial);
       scene.add(trail);
 
-      // Initialize trail positions
       for (let i = 0; i < trailLength * 3; i += 3) {
         trailPositions[i] = 0;
         trailPositions[i + 1] = 0;
         trailPositions[i + 2] = 0;
         
-        // Initialize colors
-        colors[i] = 0; // r
-        colors[i + 1] = 0.5; // g
-        colors[i + 2] = 1; // b
+        colors[i] = 0;
+        colors[i + 1] = 0.5;
+        colors[i + 2] = 1;
       }
 
-      // Animation loop
       let time = 0;
       const trailPoints: THREE.Vector3[] = Array(trailLength).fill(null).map(() => new THREE.Vector3(0, 0, 0));
       
-      // Camera tracking parameters - using linear following
       const cameraTarget = new THREE.Vector3();
       const cameraOffset = new THREE.Vector3(0, 10, 50);
       
-      // For smooth linear following without wobble
       const targetCameraPosition = new THREE.Vector3();
-      
-      // Animation function
+
       const animate = () => {
         if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
         
         time += 0.01 * (speed / 50);
         
-        // Update controls if they exist
         if (controlsRef.current) {
           controlsRef.current.update();
         }
         
-        // Calculate particle position based on parameters
         const normalizedMass = mass / 100;
         const frequency = (1 - normalizedMass * 0.5) * 0.2;
         const helixRadius = (amplitude / 100) * 20;
         
-        // Base motion parameters
         let driftSpeed = 0.5 * (speed / 50);
         let oscillationScale = 1.0;
         let zMotion = 0;
         
-        // Adjust behavior based on energy mode
         switch (energyMode) {
           case EnergyMode.POSITIVE:
             driftSpeed *= 1.5;
@@ -414,18 +371,15 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
             break;
         }
         
-        // Helix motion around a central path
         const t = time * driftSpeed;
         
         const helixX = Math.cos(t / frequency) * helixRadius * oscillationScale;
         const helixY = Math.sin(t / frequency) * helixRadius * oscillationScale;
         
-        // Main path
         const pathX = Math.sin(t * 0.2) * 30;
         const pathY = Math.cos(t * 0.1) * 10 + zMotion;
-        const pathZ = -t * 20; // Moving along Z axis
+        const pathZ = -t * 20;
         
-        // Set particle position
         if (particleRef.current) {
           particleRef.current.position.set(
             pathX + helixX,
@@ -433,35 +387,26 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
             pathZ
           );
           
-          // Linear camera following (no wobble)
           if (cameraRef.current && controlsRef.current) {
-            // Get the current particle position
             const particlePos = particleRef.current.position.clone();
             
-            // Update camera target to track particle linearly with smooth damping
-            const targetX = particlePos.x;
-            const targetY = particlePos.y;
-            const targetZ = particlePos.z;
+            cameraTarget.x = particlePos.x;
+            cameraTarget.y = particlePos.y;
+            cameraTarget.z = particlePos.z;
             
-            // Linear interpolation for camera target (look-at point)
-            cameraTarget.x = cameraTarget.x + (targetX - cameraTarget.x) * 0.03;
-            cameraTarget.y = cameraTarget.y + (targetY - cameraTarget.y) * 0.03;
-            cameraTarget.z = cameraTarget.z + (targetZ - cameraTarget.z) * 0.03;
+            cameraTarget.x = cameraTarget.x + (targetCameraPosition.x - cameraTarget.x) * 0.03;
+            cameraTarget.y = cameraTarget.y + (targetCameraPosition.y - cameraTarget.y) * 0.03;
+            cameraTarget.z = cameraTarget.z + (targetCameraPosition.z - cameraTarget.z) * 0.03;
             
-            // Set the orbit controls target for looking at
             controlsRef.current.target.copy(cameraTarget);
             
-            // Calculate the desired camera position (only tracking linearly, no wobble)
-            // We only follow in Z direction to keep the camera from wobbling
             targetCameraPosition.copy(cameraRef.current.position);
             targetCameraPosition.z = cameraTarget.z + cameraOffset.z;
             
-            // Smooth interpolation for camera position (only in Z direction)
             cameraRef.current.position.z += (targetCameraPosition.z - cameraRef.current.position.z) * 0.03;
           }
         }
         
-        // Update trail positions
         const particlePos = particleRef.current?.position || new THREE.Vector3();
         trailPoints.unshift(new THREE.Vector3(
           particlePos.x,
@@ -473,20 +418,15 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
           trailPoints.pop();
         }
         
-        // Update trail geometry
         const positionAttribute = trailGeometry.getAttribute('position');
         const colorAttribute = trailGeometry.getAttribute('color');
         
-        // Type assertion to safely access the array property
         const positions = (positionAttribute as THREE.BufferAttribute).array as Float32Array;
         const colors = (colorAttribute as THREE.BufferAttribute).array as Float32Array;
         
-        // Define consistent colors based on energy mode
         let trailColors: {r: number, g: number, b: number}[] = [];
         
-        // Set consistent color scheme based on energy mode
         if (energyMode === EnergyMode.POSITIVE) {
-          // Blue to cyan gradient for positive energy
           trailColors = Array(trailLength).fill(0).map((_, i) => {
             const t = i / trailLength;
             return {
@@ -496,7 +436,6 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
             };
           });
         } else if (energyMode === EnergyMode.NEGATIVE) {
-          // Magenta to purple gradient for negative energy
           trailColors = Array(trailLength).fill(0).map((_, i) => {
             const t = i / trailLength;
             return {
@@ -506,14 +445,12 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
             };
           });
         } else {
-          // Rainbow effect for superposition with consistent progression
           trailColors = Array(trailLength).fill(0).map((_, i) => {
             const t = i / trailLength;
-            const hue = t * 360; // Full hue rotation
+            const hue = t * 360;
             
-            // Convert HSL to RGB (simplified version)
             const h = hue / 60;
-            const c = 1; // Full saturation and lightness for vivid colors
+            const c = 1;
             const x = c * (1 - Math.abs(h % 2 - 1));
             
             let r = 0, g = 0, b = 0;
@@ -529,11 +466,9 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
           });
         }
         
-        // Update all trail points
         for (let i = 0; i < trailLength; i++) {
           const idx = i * 3;
           
-          // Only update position if we have a valid point (otherwise keep old position)
           if (i < trailPoints.length && trailPoints[i]) {
             const point = trailPoints[i];
             positions[idx] = point.x;
@@ -541,7 +476,6 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
             positions[idx + 2] = point.z;
           }
           
-          // Always update colors - ensure the trail has consistent coloring
           if (i < trailColors.length) {
             colors[idx] = trailColors[i].r;
             colors[idx + 1] = trailColors[i].g;
@@ -549,21 +483,16 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
           }
         }
         
-        // Tell three.js the attributes need updating
         positionAttribute.needsUpdate = true;
         colorAttribute.needsUpdate = true;
         
-        // Render scene
         rendererRef.current.render(scene, camera);
         
-        // Continue animation
         frameIdRef.current = requestAnimationFrame(animate);
       };
-      
-      // Start animation
+
       frameIdRef.current = requestAnimationFrame(animate);
-      
-      // Handle resize
+
       const handleResize = () => {
         if (!container || !cameraRef.current || !rendererRef.current) return;
         
@@ -575,10 +504,9 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
         
         rendererRef.current.setSize(width, height);
       };
-      
+
       window.addEventListener('resize', handleResize);
-      
-      // Cleanup function
+
       return () => {
         if (frameIdRef.current) {
           cancelAnimationFrame(frameIdRef.current);
@@ -586,10 +514,8 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
         
         window.removeEventListener('resize', handleResize);
         
-        // Full cleanup
         cleanupThreeJS();
         
-        // Show the original canvas again
         if (canvas) {
           canvas.style.display = 'block';
         }
@@ -599,22 +525,13 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
     }
   }, [is3DMode, mass, speed, amplitude, energyMode]);
 
-  // Function to reset camera to default view and also reset particle position
   const resetCameraView = () => {
     if (cameraRef.current && controlsRef.current) {
-      // Reset time to 0 to reset particle position to origin
       if (is3DMode) {
-        // Reset time to return particle to origin
         const time = 0;
-        
-        // Reset camera to default offset from origin point
         cameraRef.current.position.set(0, 20, 50);
         controlsRef.current.target.set(0, 0, 0);
-        
-        // Reset target camera position tracker
         cameraRef.current.lookAt(0, 0, 0);
-        
-        // Update the controls
         controlsRef.current.update();
       }
     }
