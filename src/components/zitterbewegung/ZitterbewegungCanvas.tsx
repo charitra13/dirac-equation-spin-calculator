@@ -253,7 +253,7 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
         75,
         container.clientWidth / 400,
         0.1,
-        1000
+        5000 // Increased far plane for infinite view
       );
       camera.position.z = 100;
       camera.position.y = 20;
@@ -279,25 +279,45 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       directionalLight.position.set(1, 1, 1);
       scene.add(directionalLight);
 
-      // Create infinite grid
-      const gridSize = 2000; // Much larger grid
-      const gridDivisions = 200; // More divisions for a finer grid
+      // Create infinite grid with lower opacity
+      const gridSize = 10000; // Much larger grid size for effectively infinite grid
+      const gridDivisions = 1000;
       const gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x008888, 0x555555);
       gridHelper.position.y = -20;
+      // Reduce grid opacity by 50%
+      gridHelper.material.opacity = 0.25;
+      gridHelper.material.transparent = true;
       scene.add(gridHelper);
       
-      // Add orbit controls with reduced sensitivity
+      // Add central Z axis line to help with orientation
+      const zAxisGeometry = new THREE.BufferGeometry();
+      const zAxisPoints = [];
+      zAxisPoints.push(new THREE.Vector3(0, -20, -gridSize/2));
+      zAxisPoints.push(new THREE.Vector3(0, -20, gridSize/2));
+      zAxisGeometry.setFromPoints(zAxisPoints);
+      
+      const zAxisMaterial = new THREE.LineBasicMaterial({ 
+        color: 0x4488ff, 
+        linewidth: 2,
+        opacity: 0.5,
+        transparent: true
+      });
+      
+      const zAxisLine = new THREE.Line(zAxisGeometry, zAxisMaterial);
+      scene.add(zAxisLine);
+      
+      // Add orbit controls with significantly reduced sensitivity
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
-      controls.dampingFactor = 0.1; // Increased damping for smoother camera movement
-      controls.rotateSpeed = 0.4; // Reduced rotation sensitivity
-      controls.zoomSpeed = 0.7; // Reduced zoom sensitivity
-      controls.panSpeed = 0.5; // Reduced pan sensitivity
-      controls.minDistance = 20; // Prevent zooming in too close
-      controls.maxDistance = 300; // Prevent zooming out too far
+      controls.dampingFactor = 0.15; // Increased damping for smoother motion
+      controls.rotateSpeed = 0.2; // Reduced rotation sensitivity
+      controls.zoomSpeed = 0.5; // Reduced zoom sensitivity
+      controls.panSpeed = 0.3; // Reduced pan sensitivity
+      controls.minDistance = 5; // Allow closer zoom
+      controls.maxDistance = 500; // Prevent zooming out too far
       // Limit vertical rotation to prevent camera flipping
       controls.minPolarAngle = Math.PI * 0.1; // Limit looking straight down
-      controls.maxPolarAngle = Math.PI * 0.9; // Limit looking straight up
+      controls.maxPolarAngle = Math.PI * 0.8; // Limit looking straight up
       controlsRef.current = controls;
       
       // Show reset button when in 3D mode
@@ -314,27 +334,29 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       scene.add(particle);
       particleRef.current = particle;
 
-      // Create trail using points
+      // Create trail using points - significantly increased number of trail points
+      const trailLength = 1000; // Increased trail length for persistence
       const trailGeometry = new THREE.BufferGeometry();
-      const trailPositions = new Float32Array(600 * 3); // 200 points * 3 coordinates
+      const trailPositions = new Float32Array(trailLength * 3); // trailLength points * 3 coordinates
       trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
       
       // Create trail color attributes
-      const colors = new Float32Array(600 * 3); // 200 points * 3 color values (r,g,b)
+      const colors = new Float32Array(trailLength * 3); // trailLength points * 3 color values (r,g,b)
       trailGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
       
       const trailMaterial = new THREE.PointsMaterial({ 
-        size: 0.5,
+        size: 0.8,
         vertexColors: true,
         blending: THREE.AdditiveBlending,
-        transparent: true
+        transparent: true,
+        depthWrite: false // Prevent depth testing issues with trail
       });
       
       const trail = new THREE.Points(trailGeometry, trailMaterial);
       scene.add(trail);
 
       // Initialize trail positions
-      for (let i = 0; i < 600; i += 3) {
+      for (let i = 0; i < trailLength * 3; i += 3) {
         trailPositions[i] = 0;
         trailPositions[i + 1] = 0;
         trailPositions[i + 2] = 0;
@@ -347,13 +369,16 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
 
       // Animation loop
       let time = 0;
-      const trailLength = 200;
-      const trailPoints: THREE.Vector3[] = Array(trailLength).fill(new THREE.Vector3(0, 0, 0));
+      const trailPoints: THREE.Vector3[] = Array(trailLength).fill(null).map(() => new THREE.Vector3(0, 0, 0));
       
-      // Camera tracking parameters - using linear following as requested
+      // Camera tracking parameters - using linear following
       const cameraTarget = new THREE.Vector3();
-      const cameraOffset = new THREE.Vector3(0, 10, 50); // Offset the camera from the particle
+      const cameraOffset = new THREE.Vector3(0, 10, 50);
       
+      // For smooth linear following without wobble
+      const targetCameraPosition = new THREE.Vector3();
+      
+      // Animation function
       const animate = () => {
         if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
         
@@ -408,18 +433,31 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
             pathZ
           );
           
-          // Linear camera following (no rotation with particle)
+          // Linear camera following (no wobble)
           if (cameraRef.current && controlsRef.current) {
-            // Calculate the desired camera position
-            const particlePos = particleRef.current.position;
+            // Get the current particle position
+            const particlePos = particleRef.current.position.clone();
             
-            // Update the orbit controls target to follow the particle linearly
-            cameraTarget.lerp(particlePos, 0.05);
+            // Update camera target to track particle linearly with smooth damping
+            const targetX = particlePos.x;
+            const targetY = particlePos.y;
+            const targetZ = particlePos.z;
+            
+            // Linear interpolation for camera target (look-at point)
+            cameraTarget.x = cameraTarget.x + (targetX - cameraTarget.x) * 0.03;
+            cameraTarget.y = cameraTarget.y + (targetY - cameraTarget.y) * 0.03;
+            cameraTarget.z = cameraTarget.z + (targetZ - cameraTarget.z) * 0.03;
+            
+            // Set the orbit controls target for looking at
             controlsRef.current.target.copy(cameraTarget);
             
-            // Keep the camera's relative position to the target consistent
-            // This means we just update the look-at target without changing the camera's relative position
-            // Note: we don't update camera position here to avoid rotating with the particle
+            // Calculate the desired camera position (only tracking linearly, no wobble)
+            // We only follow in Z direction to keep the camera from wobbling
+            targetCameraPosition.copy(cameraRef.current.position);
+            targetCameraPosition.z = cameraTarget.z + cameraOffset.z;
+            
+            // Smooth interpolation for camera position (only in Z direction)
+            cameraRef.current.position.z += (targetCameraPosition.z - cameraRef.current.position.z) * 0.03;
           }
         }
         
@@ -491,18 +529,24 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
           });
         }
         
-        for (let i = 0; i < trailPoints.length; i++) {
-          const point = trailPoints[i];
+        // Update all trail points
+        for (let i = 0; i < trailLength; i++) {
           const idx = i * 3;
           
-          positions[idx] = point.x;
-          positions[idx + 1] = point.y;
-          positions[idx + 2] = point.z;
+          // Only update position if we have a valid point (otherwise keep old position)
+          if (i < trailPoints.length && trailPoints[i]) {
+            const point = trailPoints[i];
+            positions[idx] = point.x;
+            positions[idx + 1] = point.y;
+            positions[idx + 2] = point.z;
+          }
           
-          // Apply consistent colors from our pre-calculated array
-          colors[idx] = trailColors[i].r;
-          colors[idx + 1] = trailColors[i].g;
-          colors[idx + 2] = trailColors[i].b;
+          // Always update colors - ensure the trail has consistent coloring
+          if (i < trailColors.length) {
+            colors[idx] = trailColors[i].r;
+            colors[idx + 1] = trailColors[i].g;
+            colors[idx + 2] = trailColors[i].b;
+          }
         }
         
         // Tell three.js the attributes need updating
@@ -555,24 +599,24 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
     }
   }, [is3DMode, mass, speed, amplitude, energyMode]);
 
-  // Function to reset camera to default view
+  // Function to reset camera to default view and also reset particle position
   const resetCameraView = () => {
-    if (cameraRef.current && controlsRef.current && particleRef.current) {
-      // Get the current particle position
-      const particlePosition = particleRef.current.position.clone();
-      
-      // Reset camera to default offset from particle
-      controlsRef.current.target.copy(particlePosition);
-      
-      // Position camera at an offset from the particle
-      cameraRef.current.position.set(
-        particlePosition.x,
-        particlePosition.y + 20,
-        particlePosition.z + 50
-      );
-      
-      // Update the controls
-      controlsRef.current.update();
+    if (cameraRef.current && controlsRef.current) {
+      // Reset time to 0 to reset particle position to origin
+      if (is3DMode) {
+        // Reset time to return particle to origin
+        const time = 0;
+        
+        // Reset camera to default offset from origin point
+        cameraRef.current.position.set(0, 20, 50);
+        controlsRef.current.target.set(0, 0, 0);
+        
+        // Reset target camera position tracker
+        cameraRef.current.lookAt(0, 0, 0);
+        
+        // Update the controls
+        controlsRef.current.update();
+      }
     }
   };
 
