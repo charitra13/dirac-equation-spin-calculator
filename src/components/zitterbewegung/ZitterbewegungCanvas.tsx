@@ -1,8 +1,9 @@
-
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { EnergyMode } from './ParticleReferenceData';
+import { Button } from '@/components/ui/button';
+import { RotateCcw } from 'lucide-react';
 
 interface ZitterbewegungCanvasProps {
   mass: number;
@@ -26,8 +27,10 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
   const controlsRef = useRef<OrbitControls | null>(null);
   const frameIdRef = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const particleRef = useRef<THREE.Mesh | null>(null);
+  const [showResetButton, setShowResetButton] = useState<boolean>(false);
 
-  const particleRef = useRef({
+  const particleDataRef = useRef({
     x: 0,
     y: 0,
     z: 0,
@@ -82,6 +85,7 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
 
     // Clear camera reference
     cameraRef.current = null;
+    particleRef.current = null;
   };
 
   // Set up 2D canvas for non-3D mode
@@ -89,6 +93,7 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
     if (!is3DMode) {
       // Clean up any existing 3D renderer
       cleanupThreeJS();
+      setShowResetButton(false);
 
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -109,7 +114,7 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       window.addEventListener('resize', resizeCanvas);
 
       // Reset particle state
-      particleRef.current = {
+      particleDataRef.current = {
         x: canvas.width / 2,
         y: canvas.height / 2,
         z: 0,
@@ -131,7 +136,7 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
         const normalizedAmplitude = (amplitude / 100) * 60; // Max amplitude of 60px
 
         // Update particle position based on Zitterbewegung physics (simplified for visualization)
-        const particle = particleRef.current;
+        const particle = particleDataRef.current;
         particle.time += 0.05 * normalizedSpeed;
         
         // Calculate the new position with jitter motion
@@ -274,16 +279,33 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       directionalLight.position.set(1, 1, 1);
       scene.add(directionalLight);
 
-      // Add grid helper
-      const gridHelper = new THREE.GridHelper(200, 20, 0x008888, 0x555555);
+      // Add fixed grid helper with better visual indicators
+      const gridSize = 200;
+      const gridDivisions = 20;
+      const gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x008888, 0x555555);
       gridHelper.position.y = -20;
       scene.add(gridHelper);
+      
+      // Add axis helpers for better orientation
+      const axisHelper = new THREE.AxesHelper(50);
+      scene.add(axisHelper);
 
-      // Add orbit controls
+      // Add orbit controls with reduced sensitivity
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
-      controls.dampingFactor = 0.05;
+      controls.dampingFactor = 0.1; // Increased damping for smoother camera movement
+      controls.rotateSpeed = 0.4; // Reduced rotation sensitivity
+      controls.zoomSpeed = 0.7; // Reduced zoom sensitivity
+      controls.panSpeed = 0.5; // Reduced pan sensitivity
+      controls.minDistance = 20; // Prevent zooming in too close
+      controls.maxDistance = 300; // Prevent zooming out too far
+      // Limit vertical rotation to prevent camera flipping
+      controls.minPolarAngle = Math.PI * 0.1; // Limit looking straight down
+      controls.maxPolarAngle = Math.PI * 0.9; // Limit looking straight up
       controlsRef.current = controls;
+      
+      // Show reset button when in 3D mode
+      setShowResetButton(true);
 
       // Create particle geometry
       const particleGeometry = new THREE.SphereGeometry(2, 32, 32);
@@ -294,6 +316,7 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       });
       const particle = new THREE.Mesh(particleGeometry, particleMaterial);
       scene.add(particle);
+      particleRef.current = particle;
 
       // Create trail using points
       const trailGeometry = new THREE.BufferGeometry();
@@ -330,6 +353,11 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       let time = 0;
       const trailLength = 200;
       const trailPoints: THREE.Vector3[] = Array(trailLength).fill(new THREE.Vector3(0, 0, 0));
+      
+      // Target position for camera tracking - will be updated in animation loop
+      const cameraTarget = new THREE.Vector3();
+      const cameraOffset = new THREE.Vector3(0, 10, 50); // Offset the camera from the particle
+      let cameraTracking = true; // Start with camera tracking enabled
       
       const animate = () => {
         if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
@@ -378,19 +406,43 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
         const pathZ = -t * 20; // Moving along Z axis
         
         // Set particle position
-        particle.position.set(
-          pathX + helixX,
-          pathY + helixY,
-          pathZ
-        );
-        
-        // Update camera to follow the particle with some lag
-        if (cameraRef.current) {
-          cameraRef.current.position.z = pathZ + 50;
+        if (particleRef.current) {
+          particleRef.current.position.set(
+            pathX + helixX,
+            pathY + helixY,
+            pathZ
+          );
+          
+          // Update camera target position to keep particle in view
+          if (cameraTracking && cameraRef.current) {
+            // Smoothly interpolate to new target position
+            cameraTarget.lerp(particleRef.current.position, 0.05);
+            
+            // Calculate the desired camera position based on the current orbit controls orientation
+            if (controlsRef.current) {
+              // Get the current camera-to-target vector
+              const currentOffset = new THREE.Vector3().subVectors(
+                cameraRef.current.position,
+                controlsRef.current.target
+              );
+              
+              // Normalize and scale it by the desired distance
+              currentOffset.normalize().multiplyScalar(50);
+              
+              // Set the new camera position
+              controlsRef.current.target.copy(cameraTarget);
+              cameraRef.current.position.copy(cameraTarget).add(currentOffset);
+            }
+          }
         }
         
         // Update trail positions
-        trailPoints.unshift(particle.position.clone());
+        trailPoints.unshift(new THREE.Vector3(
+          pathX + helixX,
+          pathY + helixY,
+          pathZ
+        ));
+        
         if (trailPoints.length > trailLength) {
           trailPoints.pop();
         }
@@ -484,9 +536,32 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
         if (canvas) {
           canvas.style.display = 'block';
         }
+        
+        setShowResetButton(false);
       };
     }
   }, [is3DMode, mass, speed, amplitude, energyMode]);
+
+  // Function to reset camera to default view
+  const resetCameraView = () => {
+    if (cameraRef.current && controlsRef.current && particleRef.current) {
+      // Get the current particle position
+      const particlePosition = particleRef.current.position.clone();
+      
+      // Reset camera to default offset from particle
+      controlsRef.current.target.copy(particlePosition);
+      
+      // Position camera at an offset from the particle
+      cameraRef.current.position.set(
+        particlePosition.x,
+        particlePosition.y + 20,
+        particlePosition.z + 50
+      );
+      
+      // Update the controls
+      controlsRef.current.update();
+    }
+  };
 
   return (
     <div ref={containerRef} className="w-full relative">
@@ -495,6 +570,18 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
         className="w-full rounded-md border border-gray-800 bg-black overflow-hidden"
         style={{ height: '400px', display: is3DMode ? 'none' : 'block' }}
       />
+      
+      {showResetButton && (
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={resetCameraView}
+          className="absolute top-2 right-2 bg-gray-900/70 text-white border-gray-700 hover:bg-gray-800"
+        >
+          <RotateCcw className="w-4 h-4 mr-1" />
+          Reset View
+        </Button>
+      )}
     </div>
   );
 };
