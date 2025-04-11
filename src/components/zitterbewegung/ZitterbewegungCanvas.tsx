@@ -279,17 +279,13 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       directionalLight.position.set(1, 1, 1);
       scene.add(directionalLight);
 
-      // Add fixed grid helper with better visual indicators
-      const gridSize = 200;
-      const gridDivisions = 20;
+      // Create infinite grid
+      const gridSize = 2000; // Much larger grid
+      const gridDivisions = 200; // More divisions for a finer grid
       const gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x008888, 0x555555);
       gridHelper.position.y = -20;
       scene.add(gridHelper);
       
-      // Add axis helpers for better orientation
-      const axisHelper = new THREE.AxesHelper(50);
-      scene.add(axisHelper);
-
       // Add orbit controls with reduced sensitivity
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
@@ -354,10 +350,9 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
       const trailLength = 200;
       const trailPoints: THREE.Vector3[] = Array(trailLength).fill(new THREE.Vector3(0, 0, 0));
       
-      // Target position for camera tracking - will be updated in animation loop
+      // Camera tracking parameters - using linear following as requested
       const cameraTarget = new THREE.Vector3();
       const cameraOffset = new THREE.Vector3(0, 10, 50); // Offset the camera from the particle
-      let cameraTracking = true; // Start with camera tracking enabled
       
       const animate = () => {
         if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
@@ -413,34 +408,27 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
             pathZ
           );
           
-          // Update camera target position to keep particle in view
-          if (cameraTracking && cameraRef.current) {
-            // Smoothly interpolate to new target position
-            cameraTarget.lerp(particleRef.current.position, 0.05);
+          // Linear camera following (no rotation with particle)
+          if (cameraRef.current && controlsRef.current) {
+            // Calculate the desired camera position
+            const particlePos = particleRef.current.position;
             
-            // Calculate the desired camera position based on the current orbit controls orientation
-            if (controlsRef.current) {
-              // Get the current camera-to-target vector
-              const currentOffset = new THREE.Vector3().subVectors(
-                cameraRef.current.position,
-                controlsRef.current.target
-              );
-              
-              // Normalize and scale it by the desired distance
-              currentOffset.normalize().multiplyScalar(50);
-              
-              // Set the new camera position
-              controlsRef.current.target.copy(cameraTarget);
-              cameraRef.current.position.copy(cameraTarget).add(currentOffset);
-            }
+            // Update the orbit controls target to follow the particle linearly
+            cameraTarget.lerp(particlePos, 0.05);
+            controlsRef.current.target.copy(cameraTarget);
+            
+            // Keep the camera's relative position to the target consistent
+            // This means we just update the look-at target without changing the camera's relative position
+            // Note: we don't update camera position here to avoid rotating with the particle
           }
         }
         
         // Update trail positions
+        const particlePos = particleRef.current?.position || new THREE.Vector3();
         trailPoints.unshift(new THREE.Vector3(
-          pathX + helixX,
-          pathY + helixY,
-          pathZ
+          particlePos.x,
+          particlePos.y,
+          particlePos.z
         ));
         
         if (trailPoints.length > trailLength) {
@@ -455,6 +443,54 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
         const positions = (positionAttribute as THREE.BufferAttribute).array as Float32Array;
         const colors = (colorAttribute as THREE.BufferAttribute).array as Float32Array;
         
+        // Define consistent colors based on energy mode
+        let trailColors: {r: number, g: number, b: number}[] = [];
+        
+        // Set consistent color scheme based on energy mode
+        if (energyMode === EnergyMode.POSITIVE) {
+          // Blue to cyan gradient for positive energy
+          trailColors = Array(trailLength).fill(0).map((_, i) => {
+            const t = i / trailLength;
+            return {
+              r: 0,
+              g: 0.5 + 0.5 * (1 - t),
+              b: 0.8 + 0.2 * (1 - t)
+            };
+          });
+        } else if (energyMode === EnergyMode.NEGATIVE) {
+          // Magenta to purple gradient for negative energy
+          trailColors = Array(trailLength).fill(0).map((_, i) => {
+            const t = i / trailLength;
+            return {
+              r: 0.8 + 0.2 * (1 - t),
+              g: 0.2 * (1 - t),
+              b: 0.5 + 0.3 * (1 - t)
+            };
+          });
+        } else {
+          // Rainbow effect for superposition with consistent progression
+          trailColors = Array(trailLength).fill(0).map((_, i) => {
+            const t = i / trailLength;
+            const hue = t * 360; // Full hue rotation
+            
+            // Convert HSL to RGB (simplified version)
+            const h = hue / 60;
+            const c = 1; // Full saturation and lightness for vivid colors
+            const x = c * (1 - Math.abs(h % 2 - 1));
+            
+            let r = 0, g = 0, b = 0;
+            
+            if (h >= 0 && h < 1) { r = c; g = x; b = 0; }
+            else if (h >= 1 && h < 2) { r = x; g = c; b = 0; }
+            else if (h >= 2 && h < 3) { r = 0; g = c; b = x; }
+            else if (h >= 3 && h < 4) { r = 0; g = x; b = c; }
+            else if (h >= 4 && h < 5) { r = x; g = 0; b = c; }
+            else { r = c; g = 0; b = x; }
+            
+            return { r, g, b };
+          });
+        }
+        
         for (let i = 0; i < trailPoints.length; i++) {
           const point = trailPoints[i];
           const idx = i * 3;
@@ -463,33 +499,10 @@ const ZitterbewegungCanvas: React.FC<ZitterbewegungCanvasProps> = ({
           positions[idx + 1] = point.y;
           positions[idx + 2] = point.z;
           
-          // Color based on position in trail and energy mode
-          const colorFactor = 1 - (i / trailLength);
-          
-          // Base color
-          let r = 0, g = 0, b = 0;
-          
-          // Different color schemes based on energy mode
-          if (energyMode === EnergyMode.POSITIVE) {
-            // Blue to cyan gradient
-            r = 0;
-            g = colorFactor * 0.8;
-            b = 0.5 + colorFactor * 0.5;
-          } else if (energyMode === EnergyMode.NEGATIVE) {
-            // Red to pink gradient
-            r = 0.5 + colorFactor * 0.5;
-            g = 0;
-            b = colorFactor * 0.5;
-          } else {
-            // Rainbow effect for superposition
-            r = 0.5 + 0.5 * Math.sin(colorFactor * Math.PI * 2);
-            g = 0.5 + 0.5 * Math.sin(colorFactor * Math.PI * 2 + Math.PI * 2/3);
-            b = 0.5 + 0.5 * Math.sin(colorFactor * Math.PI * 2 + Math.PI * 4/3);
-          }
-          
-          colors[idx] = r;
-          colors[idx + 1] = g;
-          colors[idx + 2] = b;
+          // Apply consistent colors from our pre-calculated array
+          colors[idx] = trailColors[i].r;
+          colors[idx + 1] = trailColors[i].g;
+          colors[idx + 2] = trailColors[i].b;
         }
         
         // Tell three.js the attributes need updating
